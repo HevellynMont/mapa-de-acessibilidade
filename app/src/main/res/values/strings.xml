@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Mapa de Acessibilidade</string>
+
+    <string name="titulo">Logo do Aplicativo</string>
+    <string name="registre_se">Registre-se</string>
+    <string name="entrar">Entrar</string>
+    <string name="visitante">Entrar como visitante</string>
+    <string name="add_new_location">Adicionar novo local</string>
+
+</resources>
