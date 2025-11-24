@@ -1,124 +1,58 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.controller;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.LocalDTO;
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.request.LocalRequestDTO;
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.response.LocalResponseDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Local;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.service.LocalService;
 
-// Define a classe como um controlador REST
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
 @RestController
-// Mapeamento base para todos os endpoints deste controlador
-@RequestMapping("/api/locais") 
-@CrossOrigin(origins = "*")
+@RequestMapping("/locais")
+@Tag(name = "Locais")
 public class LocalController {
-
-    private final LocalService localService;
-
-    // Injeção de Dependência do LocalService
     @Autowired
-    public LocalController(LocalService localService) {
-        this.localService = localService;
-    }
+    private LocalService localService;
 
-    /* ----------------------------------
-     * 1. C (CREATE) - Cadastrar Novo Local
-     * Endpoint: POST /api/locais
-     * ---------------------------------- */
     @PostMapping
-    // O Front-end envia o Local e uma lista de IDs de Tags
-    public ResponseEntity<Local> criarLocal(@RequestBody Local local, 
-                                            @RequestParam Set<Long> tagIds,
-                                            @RequestParam Long proprietarioId) {
-        try {
-            Local novoLocal = localService.salvarLocal(local, tagIds, proprietarioId);
-            return new ResponseEntity<>(novoLocal, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Local> criar(@RequestBody @Valid LocalRequestDTO dto) {
+        Local local = new Local();
+        BeanUtils.copyProperties(dto, local);
+        Local salvo = localService.salvar(local, dto.idProprietario());
+        var uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(salvo.getId()).toUri();
+        return ResponseEntity.created(uri).body(salvo);
     }
 
-    
     @GetMapping
-    public ResponseEntity<List<Local>> listarTodos() {
-        List<Local> locais = localService.buscarTodos();
-        return new ResponseEntity<>(locais, HttpStatus.OK);
+    public ResponseEntity<List<LocalResponseDTO>> listar() {
+        return ResponseEntity.ok(LocalResponseDTO.toResponsesDTO(localService.listar()));
     }
-
-   
-    @GetMapping("/{id}")
-    public ResponseEntity<Local> buscarPorId(@PathVariable Long id) {
-        return localService.buscarPorId(id)
-                .map(local -> new ResponseEntity<>(local, HttpStatus.OK))
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-
 
     @PutMapping("/{id}")
-    public ResponseEntity<Local> atualizarLocal(
-        @PathVariable Long id,
-        @RequestBody Local detalhesLocal,
-        @RequestParam(required = false) Set<Long> tagIds) {
-
-        try {
-            Local localAtualizado = localService.atualizarLocal(id, detalhesLocal, tagIds);
-            return new ResponseEntity<>(localAtualizado, HttpStatus.OK);
-
-        } catch (RuntimeException e) {
-
-            if (e.getMessage().contains("Local não encontrado")) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-}
-
-    
-    
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarLocal(@PathVariable Long id) {
-        if (localService.buscarPorId(id).isPresent()) {
-            localService.deletarLocal(id);
-        
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT); 
-        }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public ResponseEntity<LocalResponseDTO> atualizar(@PathVariable Long id, @RequestBody @Valid LocalRequestDTO dto) {
+        Local atualizado = localService.atualizar(id, dto);
+        return ResponseEntity.ok(LocalResponseDTO.toResponseDTO(atualizado));
     }
-    
-  
-    @GetMapping("/proprietario/{proprietarioId}")
-    public ResponseEntity<List<LocalDTO>> listarPorProprietario(@PathVariable Long proprietarioId) {
-        System.out.println("=== BUSCANDO LOCAIS DO PROPRIETÁRIO: " + proprietarioId + " ===");
-        List<Local> locais = localService.buscarPorProprietario(proprietarioId);
-        System.out.println("Total de locais encontrados: " + locais.size());
-        
-        if (locais.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-        
-        List<LocalDTO> locaisDTO = locais.stream()
-            .map(local -> {
-                System.out.println("Processando local ID: " + local.getId() + " - " + local.getNome());
-                return new LocalDTO(local);
-            })
-            .collect(Collectors.toList());
-        return new ResponseEntity<>(locaisDTO, HttpStatus.OK);
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        localService.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 }
