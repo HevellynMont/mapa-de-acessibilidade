@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redefinir Senha - Mapa de Acessibilidade</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3013/3013139.png" type="image/png">
     <link rel="stylesheet" href="../css/redefinir_senha.css">
 </head>
 <body>
@@ -17,38 +18,85 @@
         </div>
         
         <div class="right-panel">
-            <h2>Redefinir Senha</h2>
+            <h2>Recuperar Senha</h2>
             
             <form id="redefinirForm">
                 <div class="input-group">
                     <input type="email" id="email" placeholder="Digite seu email..." required>
                 </div>
                 
-                <div id="mensagem" class="mensagem">
-                    Um link de recuperação foi enviado para o seu email!
-                </div>
+                <div id="mensagem" class="mensagem" style="display: none; margin-top: 15px; padding: 10px; border-radius: 5px;"></div>
                 
                 <div class="link-container">
-                    <a href="../html/login.html" class="link">Logar</a>
+                    <a href="login.html" class="link">Voltar para Login</a>
                 </div>
                 
-                <button type="submit" class="btn-enviar">Enviar</button>
+                <button type="submit" class="btn-enviar">Buscar Senha</button>
             </form>
         </div>
     </div>
     
+    <script src="../js/config.js"></script>
+    
     <script>
-        document.getElementById('redefinirForm').addEventListener('submit', function(e) {
+        document.getElementById('redefinirForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
+            const emailInput = document.getElementById('email');
+            const email = emailInput.value.trim();
             const mensagem = document.getElementById('mensagem');
+            const btn = document.querySelector('.btn-enviar');
             
-            mensagem.style.display = 'block';
+            // Reset visual
+            mensagem.style.display = 'none';
+            mensagem.className = 'mensagem'; // Reseta classes de estilo se houver
+            btn.disabled = true;
+            btn.textContent = "Buscando...";
             
-            setTimeout(function() {
-                window.location.href = '../html/login.html';
-            }, 3000);
+            try {
+                let usuarioEncontrado = null;
+
+                // 1. Tenta buscar em Usuários Comuns
+                const usuarios = await fetchAPI('/usuarios');
+                usuarioEncontrado = usuarios.find(u => u.email === email);
+
+                // 2. Se não achar, busca em Proprietários
+                if (!usuarioEncontrado) {
+                    const proprietarios = await fetchAPI('/proprietarios');
+                    usuarioEncontrado = proprietarios.find(p => p.email === email);
+                }
+
+                mensagem.style.display = 'block';
+
+                if (usuarioEncontrado) {
+                    // SUCESSO: Mostra a senha
+                    mensagem.style.backgroundColor = "#d4edda";
+                    mensagem.style.color = "#155724";
+                    mensagem.style.border = "1px solid #c3e6cb";
+                    mensagem.innerHTML = `Sua senha é: <strong>${usuarioEncontrado.senha}</strong>`;
+                    
+                    // Redireciona após 5 segundos para dar tempo de ler
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 5000);
+                } else {
+                    // ERRO: Não achou
+                    mensagem.style.backgroundColor = "#f8d7da";
+                    mensagem.style.color = "#721c24";
+                    mensagem.style.border = "1px solid #f5c6cb";
+                    mensagem.textContent = "E-mail não encontrado no sistema.";
+                }
+
+            } catch (error) {
+                console.error(error);
+                mensagem.style.display = 'block';
+                mensagem.style.backgroundColor = "#fff3cd";
+                mensagem.style.color = "#856404";
+                mensagem.textContent = "Erro de conexão com o servidor.";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Buscar Senha";
+            }
         });
     </script>
 </body>
