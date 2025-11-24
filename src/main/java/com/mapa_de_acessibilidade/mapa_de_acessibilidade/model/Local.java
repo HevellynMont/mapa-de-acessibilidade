@@ -45,6 +45,6 @@ public class Local {
     private Proprietario proprietario;
 
     @OneToMany(mappedBy = "local", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Schema(hidden = true) // <--- ESCONDE DO SWAGGER PARA NÃO TRAVAR
+    @Schema(hidden = true)
     private Set<Comentario> comentarios = new HashSet<>();
 }
