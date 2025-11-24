@@ -54,27 +54,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. FUNÇÕES DE CARREGAMENTO
 
-    async function carregarLocaisDoProprietario(id) {
-        const lista = document.getElementById('lista-meus-locais');
-        lista.innerHTML = '<p class="empty-state">Carregando...</p>';
+    function carregarLocaisDoProprietario(id) {
+        const locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+        // Filtra apenas os locais desse dono
+        const meus = locais.filter(l => l.proprietarioId == id);
         
-        try {
-            const response = await fetch(`http://localhost:8080/api/locais`);
-            if (!response.ok) {
-                lista.innerHTML = '<p class="empty-state">Erro ao carregar locais.</p>';
-                return;
-            }
-            
-            const locais = await response.json();
-            // Filtra apenas os locais desse proprietário
-            const meus = locais.filter(l => l.proprietario && l.proprietario.id == id);
-            
-            lista.innerHTML = '';
+        const lista = document.getElementById('lista-meus-locais');
+        lista.innerHTML = '';
 
-            if(meus.length === 0) {
-                lista.innerHTML = '<p class="empty-state">Nenhum local cadastrado.</p>';
-                return;
-            }
+        if(meus.length === 0) {
+            lista.innerHTML = '<p class="empty-state">Nenhum local cadastrado.</p>';
+            return;
+        }
 
         // Helper: calcula nota 0..5 baseada na proporção de comentários com tags
         function calcularNotaAcessibilidade(local) {
@@ -138,173 +129,122 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             lista.appendChild(div);
         });
-        } catch (error) {
-            console.error('Erro ao carregar locais:', error);
-            lista.innerHTML = '<p class="empty-state">Erro ao carregar locais.</p>';
-        }
     }
 
-    async function carregarMeusComentarios(nomeUsuario) {
+    function carregarMeusComentarios(nomeUsuario) {
+        const locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
         const lista = document.getElementById('lista-comentarios');
-        lista.innerHTML = '<p class="empty-state">Carregando...</p>';
-        
-        try {
-            const response = await fetch(`http://localhost:8080/api/comentarios/usuario/${userId}`);
-            if (!response.ok) {
-                if (response.status === 204) {
-                    lista.innerHTML = '<p class="empty-state">Você ainda não fez nenhum comentário.</p>';
-                } else {
-                    lista.innerHTML = '<p class="empty-state">Erro ao carregar comentários.</p>';
-                }
-                return;
+        lista.innerHTML = '';
+
+        let achouAlgum = false;
+
+        locais.forEach(local => {
+            if (local.comentarios) {
+                local.comentarios.forEach((coment, indexComentario) => {
+                    if (coment.autor === nomeUsuario) {
+                        achouAlgum = true;
+                        const div = document.createElement('div');
+                        div.className = 'card-item';
+                        
+                        // Renderizar tags do comentário (se houver)
+                        let tagsHtml = '';
+                        if (coment.tags && coment.tags.length > 0) {
+                            tagsHtml = '<div class="comment-tags">';
+                            coment.tags.forEach(tag => tagsHtml += `<span class="mini-tag">${tag}</span>`);
+                            tagsHtml += '</div>';
+                        }
+
+                        div.innerHTML = `
+                            <div class="card-header-row">
+                                <h4>${local.nome}</h4>
+                                <div class="card-actions">
+                                    <button class="action-btn edit" onclick="editarComentarioPerfil(${local.id}, ${indexComentario})">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button class="action-btn delete" onclick="excluirComentarioPerfil(${local.id}, ${indexComentario})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <p class="comment-quote">"${coment.texto}"</p>
+                            ${tagsHtml}
+                            
+                            <div class="see-on-map">
+                                <small onclick="irParaMapa(${local.id})">
+                                    Ver no mapa <i class="fa-solid fa-arrow-right"></i>
+                                </small>
+                            </div>
+                        `;
+                        lista.appendChild(div);
+                    }
+                });
             }
-            
-            const comentarios = await response.json();
-            lista.innerHTML = '';
+        });
 
-            if (!comentarios || comentarios.length === 0) {
-                lista.innerHTML = '<p class="empty-state">Você ainda não fez nenhum comentário.</p>';
-                return;
-            }
-
-            comentarios.forEach(coment => {
-                const local = coment.local || {};
-                const tagNames = coment.tags ? coment.tags.map(t => t.nome) : [];
-                const div = document.createElement('div');
-                div.className = 'card-item';
-                
-                // Renderizar tags do comentário (se houver)
-                let tagsHtml = '';
-                if (tagNames.length > 0) {
-                    tagsHtml = '<div class="comment-tags">';
-                    tagNames.forEach(tag => tagsHtml += `<span class="mini-tag">${tag}</span>`);
-                    tagsHtml += '</div>';
-                }
-
-                div.innerHTML = `
-                    <div class="card-header-row">
-                        <h4>${local.nome || 'Local'}</h4>
-                        <div class="card-actions">
-                            <button class="action-btn edit" onclick="editarComentarioPerfil(${coment.id})">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button class="action-btn delete" onclick="excluirComentarioPerfil(${coment.id})">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <p class="comment-quote">"${coment.descricao || coment.texto || ''}"</p>
-                    ${tagsHtml}
-                    
-                    <div class="see-on-map">
-                        <small onclick="irParaMapa(${local.id})">
-                            Ver no mapa <i class="fa-solid fa-arrow-right"></i>
-                        </small>
-                    </div>
-                `;
-                lista.appendChild(div);
-            });
-        } catch (error) {
-            console.error('Erro ao carregar comentários:', error);
-            lista.innerHTML = '<p class="empty-state">Erro ao carregar comentários.</p>';
+        if (!achouAlgum) {
+            lista.innerHTML = '<p class="empty-state">Você ainda não fez nenhum comentário.</p>';
         }
     }
 
     // 4. LÓGICA DOS BOTÕES (Global para o HTML acessar)
 
     // --- Ações de Local (Proprietário) ---
-    window.editarLocalPerfil = async function(idLocal) {
+    window.editarLocalPerfil = function(idLocal) {
         const novoNome = prompt("Novo nome para o local:");
-        if (novoNome && novoNome.trim()) {
-            try {
-                const response = await fetch(`http://localhost:8080/api/locais/${idLocal}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome: novoNome })
-                });
-                
-                if (response.ok) {
-                    alert('Local atualizado!');
-                    location.reload();
-                } else {
-                    alert('Erro ao atualizar local.');
-                }
-            } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao conectar com o servidor.');
+        if (novoNome) {
+            let locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+            const local = locais.find(l => l.id === idLocal);
+            if (local) {
+                local.nome = novoNome;
+                localStorage.setItem('locaisSimulados', JSON.stringify(locais));
+                location.reload(); // Atualiza a tela
             }
         }
     };
 
-    window.excluirLocalPerfil = async function(idLocal) {
+    window.excluirLocalPerfil = function(idLocal) {
         if (confirm("Tem certeza que deseja excluir este local permanentemente?")) {
-            try {
-                const response = await fetch(`http://localhost:8080/api/locais/${idLocal}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    alert('Local excluído!');
-                    location.reload();
-                } else {
-                    alert('Erro ao excluir local.');
-                }
-            } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao conectar com o servidor.');
-            }
+            let locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+            locais = locais.filter(l => l.id !== idLocal);
+            localStorage.setItem('locaisSimulados', JSON.stringify(locais));
+            location.reload();
         }
     };
 
     // --- Ações de Comentário (Usuário) ---
-    window.editarComentarioPerfil = async function(comentarioId) {
-        const novoTexto = prompt("Edite seu comentário:");
+    window.editarComentarioPerfil = function(idLocal, indexComentario) {
+        let locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+        const localIdx = locais.findIndex(l => l.id === idLocal);
         
-        if (novoTexto !== null && novoTexto.trim() !== "") {
-            try {
-                const response = await fetch(`http://localhost:8080/api/comentarios/${comentarioId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ descricao: novoTexto, nota: 5 })
-                });
-                
-                if (response.ok) {
-                    alert('Comentário atualizado!');
-                    location.reload();
-                } else {
-                    alert('Erro ao atualizar comentário.');
-                }
-            } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao conectar com o servidor.');
+        if (localIdx !== -1) {
+            const textoAtual = locais[localIdx].comentarios[indexComentario].texto;
+            const novoTexto = prompt("Edite seu comentário:", textoAtual);
+            
+            if (novoTexto !== null && novoTexto.trim() !== "") {
+                locais[localIdx].comentarios[indexComentario].texto = novoTexto;
+                localStorage.setItem('locaisSimulados', JSON.stringify(locais));
+                location.reload();
             }
         }
     };
 
-    window.excluirComentarioPerfil = async function(comentarioId) {
+    window.excluirComentarioPerfil = function(idLocal, indexComentario) {
         if (confirm("Deseja apagar este comentário?")) {
-            try {
-                const response = await fetch(`http://localhost:8080/api/comentarios/${comentarioId}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    alert('Comentário excluído!');
-                    location.reload();
-                } else {
-                    alert('Erro ao excluir comentário.');
-                }
-            } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao conectar com o servidor.');
+            let locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+            const localIdx = locais.findIndex(l => l.id === idLocal);
+            
+            if (localIdx !== -1) {
+                locais[localIdx].comentarios.splice(indexComentario, 1);
+                localStorage.setItem('locaisSimulados', JSON.stringify(locais));
+                location.reload();
             }
         }
     };
 
     // Redirecionamento Mapa
     window.irParaMapa = function(idLocal) {
-        // Navega para o mapa - o mapa carregará todos os locais do backend
+        localStorage.setItem('zoomLocalId', idLocal);
         window.location.href = '../html/mapa.html';
     };
 
@@ -368,9 +308,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Ação usada ao clicar em "Adicionar Novo Local" no perfil (navega ao mapa)
+    // Ação usada ao clicar em "Adicionar Novo Local" no perfil (abre modal no mapa)
     window.adicionarNovoLocalPerfil = function() {
-        // Navega para o mapa onde o proprietário pode adicionar novo local
+        // marca que o mapa deve abrir o modal de novo local e navega
+        try { localStorage.setItem('openNovoLocal', '1'); } catch(e) {}
         window.location.href = 'mapa.html';
     };
 

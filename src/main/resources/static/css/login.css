@@ -113,41 +113,6 @@ body {
     color: var(--primario-escuro);
 }
 
-.toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin: 0 0 20px 0;
-}
-
-.toggle {
-    display: flex;
-    gap: 20px;
-}
-
-.toggle input {
-    display: none;
-}
-
-.toggle label {
-    padding: 12px 35px;
-    border-radius: 40px;
-    cursor: pointer;
-    font-size: 15px;
-    background-color: var(--bg);
-    color: var(--texto-claro);
-    border: none;
-    font-weight: 500;
-    transition: 0.3s ease;
-}
-
-.toggle input:checked + label {
-    background-color: var(--primario-escuro);
-    color: white;
-    font-weight: bold;
-}
-
 .btn-entrar {
     width: 100%;
     padding: 15px;

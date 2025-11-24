@@ -48,43 +48,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     })();
 
-    // Função para carregar locais do backend
-    async function carregarPontos() {
-        try {
-            const response = await fetch('http://localhost:8080/api/locais');
-            if (!response.ok) {
-                console.error('Erro ao buscar locais:', response.status);
-                return;
+    if (!localStorage.getItem('locaisSimulados')) {
+        const locaisIniciais = [
+            { 
+                id: 1, 
+                nome: "Shopping Vitória", 
+                latitude: -20.3155, 
+                longitude: -40.3128, 
+                descricao: "Shopping acessível com rampas e elevadores.", 
+                endereco: "Av. Américo Buaiz, 200", 
+                proprietarioId: 1,
+                comentarios: [
+                    { autor: "Maria", texto: "Muito bom!", tags: ["Rampa"] }
+                ]
             }
-            
-            const locais = await response.json();
-            console.log('Locais carregados do backend:', locais);
-            
-            // Remove marcadores anteriores
-            todosMarcadores.forEach(item => mapa.removeLayer(item.marker));
-            todosMarcadores = [];
+        ];
+        localStorage.setItem('locaisSimulados', JSON.stringify(locaisIniciais));
+    }
 
-            // Adiciona marcadores para cada local
-            locais.forEach(local => {
+    function carregarPontos() {
+        const locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+        
+        todosMarcadores.forEach(item => mapa.removeLayer(item.marker));
+        todosMarcadores = [];
+
+        locais.forEach(local => {
                 if (local.latitude && local.longitude) {
-                    const hasSeal = temSelo(local);
-                    const iconColor = hasSeal ? 'green' : 'grey';
-                    const icon = criarIcone(iconColor);
+                const hasSeal = temSelo(local);
+                const iconColor = hasSeal ? 'green' : 'grey';
+                const icon = criarIcone(iconColor);
 
-                    const marcador = L.marker([local.latitude, local.longitude], { icon: icon });
-                    marcador.addTo(mapa);
+                const marcador = L.marker([local.latitude, local.longitude], { icon: icon });
+                marcador.addTo(mapa);
 
-                    marcador.on('click', () => {
-                        abrirPainel(local);
-                        mapa.setView([local.latitude, local.longitude], 16);
-                    });
+                marcador.on('click', () => {
+                    abrirPainel(local);
+                    mapa.setView([local.latitude, local.longitude], 16);
+                });
 
-                    todosMarcadores.push({ local, marker: marcador });
-                }
-            });
-        } catch (error) {
-            console.error('Erro ao carregar locais:', error);
-        }
+                todosMarcadores.push({ local, marker: marcador });
+            }
+        });
     }
 
     carregarPontos();
@@ -92,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const painel = document.getElementById('panel-detalhes');
     const botaoFecharPainel = document.getElementById('panel-close');
 
-    async function abrirPainel(local) {
+    function abrirPainel(local) {
         localAtualId = local.id;
         document.getElementById('panel-titulo').textContent = local.nome;
         
@@ -108,56 +112,56 @@ document.addEventListener('DOMContentLoaded', () => {
         if (local.foto) {
             imgEl.src = local.foto;
             imgEl.style.display = 'block';
-            if (placeholderEl) placeholderEl.style.display = 'none';
+            placeholderEl.style.display = 'none';
         } else {
             imgEl.style.display = 'none';
-            if (placeholderEl) placeholderEl.style.display = 'flex';
+            placeholderEl.style.display = 'flex';
         }
 
         const panelComentarios = document.getElementById('panel-comentarios');
         panelComentarios.innerHTML = '';
 
-        // Buscar comentários do backend
-        try {
-            const response = await fetch(`http://localhost:8080/api/comentarios/local/${local.id}`);
-            let comentarios = [];
-            
-            if (response.ok) {
-                comentarios = await response.json();
-            } else if (response.status !== 204) {
-                console.error('Erro ao buscar comentários:', response.status);
-            }
+        // Garantir que cada comentário tenha um avatar (gera um Dicebear quando ausente)
+        if (local.comentarios && local.comentarios.length > 0) {
+            const locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+            const idxLocal = locais.findIndex(l => l.id == local.id);
 
-            if (comentarios && comentarios.length > 0) {
-                // Avaliar selo com base nos comentários
-                local.comentarios = comentarios;
-                avaliarSelo(local);
-
-                // Calcula e mostra a média de avaliação baseada nas tags dos comentários
-                const panelNotaEl = document.getElementById('panel-nota');
-                if (panelNotaEl) {
-                    const avg = calcularNotaAcessibilidade(local);
-                    panelNotaEl.innerHTML = renderStarsHtml(avg);
-                    panelNotaEl.style.display = 'block';
+            local.comentarios.forEach((c, idx) => {
+                if (!c.avatar) {
+                    try {
+                        const seed = encodeURIComponent(c.autor || ('user' + idx));
+                        c.avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
+                    } catch (e) {
+                        c.avatar = null;
+                    }
                 }
-
-                // Renderiza os comentários
-                comentarios.forEach((c, idx) => {
-                    const tagNames = c.tags ? c.tags.map(t => t.nome) : [];
-                    const autorNome = c.pessoa ? c.pessoa.nome : 'Anônimo';
-                    const pessoaId = c.pessoa ? c.pessoa.id : null;
-                    const textoComentario = c.descricao || c.texto || '';
-                    adicionarComentarioNaLista(autorNome, textoComentario, tagNames, c.id, pessoaId, false, null);
-                });
-            } else {
-                avaliarSelo(local);
-                const panelNotaEl = document.getElementById('panel-nota');
-                if (panelNotaEl) panelNotaEl.style.display = 'none';
-                panelComentarios.innerHTML = '<p class="empty-state">Nenhum comentário ainda.</p>';
+                // Atualiza no storage se possível
+                if (idxLocal !== -1) locais[idxLocal].comentarios[idx] = c;
+            });
+            if (idxLocal !== -1) {
+                try { localStorage.setItem('locaisSimulados', JSON.stringify(locais)); } catch(e) {}
             }
-        } catch (error) {
-            console.error('Erro ao buscar comentários:', error);
-            panelComentarios.innerHTML = '<p class="empty-state">Erro ao carregar comentários.</p>';
+
+            // Avaliar selo com base nos comentários
+            avaliarSelo(local);
+
+            // Calcula e mostra a média de avaliação baseada nas tags dos comentários
+            const panelNotaEl = document.getElementById('panel-nota');
+            if (panelNotaEl) {
+                const avg = calcularNotaAcessibilidade(local);
+                panelNotaEl.innerHTML = renderStarsHtml(avg);
+                panelNotaEl.style.display = 'block';
+            }
+
+            // Renderiza os comentários (já com avatar presente)
+            local.comentarios.forEach((c, idx) => {
+                adicionarComentarioNaLista(c.autor, c.texto, c.tags, local.id, idx, false, c.avatar || null);
+            });
+        } else {
+            avaliarSelo(local);
+            const panelNotaEl = document.getElementById('panel-nota');
+            if (panelNotaEl) panelNotaEl.style.display = 'none';
+            panelComentarios.innerHTML = '<p class="empty-state">Nenhum comentário ainda.</p>';
         }
 
         painel.classList.add('is-open');
@@ -181,14 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-if (btnPerfil) {
+    if (btnPerfil) {
         btnPerfil.addEventListener('click', () => {
-            const role = localStorage.getItem('userRole');
-            if (role === 'proprietario') {
-                window.location.href = 'perfil-prop.html';
-            } else {
-                window.location.href = 'perfil-user.html';
-            }
+            window.location.href = 'perfil.html';
         });
     }
 
@@ -196,6 +195,25 @@ if (btnPerfil) {
         modalCloseBtn.addEventListener('click', () => {
             modal.style.display = 'none';
         });
+    }
+
+    // Se o perfil pediu para abrir o modal de novo local, abre e remove a flag
+    if (localStorage.getItem('openNovoLocal')) {
+        if (modal) modal.style.display = 'flex';
+        try { localStorage.removeItem('openNovoLocal'); } catch(e) {}
+    }
+
+    // Se o perfil solicitou zoom em um local (via 'Ver no mapa'), usamos 'zoomLocalId'
+    if (localStorage.getItem('zoomLocalId')) {
+        const zoomId = localStorage.getItem('zoomLocalId');
+        try { localStorage.removeItem('zoomLocalId'); } catch(e) {}
+        const locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+        const alvo = locais.find(l => l.id == zoomId);
+        if (alvo) {
+            carregarPontos();
+            abrirPainel(alvo);
+            if (alvo.latitude && alvo.longitude) mapa.setView([alvo.latitude, alvo.longitude], 16);
+        }
     }
 
     if (formNovoLocal) {
@@ -215,14 +233,14 @@ if (btnPerfil) {
 
             try {
                 const query = `${endereco}`;
-                const geoResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
-                const geoData = await geoResponse.json();
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+                const data = await response.json();
 
                 let lat, lon;
 
-                if (geoData && geoData.length > 0) {
-                    lat = parseFloat(geoData[0].lat);
-                    lon = parseFloat(geoData[0].lon);
+                if (data && data.length > 0) {
+                    lat = parseFloat(data[0].lat);
+                    lon = parseFloat(data[0].lon);
                 } else {
                     const center = mapa.getCenter();
                     lat = center.lat;
@@ -230,40 +248,31 @@ if (btnPerfil) {
                     alert("Endereço não encontrado exato. Usando centro da tela.");
                 }
 
-                btnSalvar.textContent = "Salvando...";
-
-                // Enviar para o backend
                 const novoLocal = {
+                    id: Date.now(),
                     nome: nome,
                     endereco: endereco,
                     descricao: descricao,
                     latitude: lat,
-                    longitude: lon
+                    longitude: lon,
+                    proprietarioId: userId,
+                    comentarios: []
                 };
 
-                const response = await fetch(`http://localhost:8080/api/locais?proprietarioId=${userId}&tagIds=`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(novoLocal)
-                });
+                const locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+                locais.push(novoLocal);
+                localStorage.setItem('locaisSimulados', JSON.stringify(locais));
 
-                if (response.ok) {
-                    const localSalvo = await response.json();
-                    alert("Local salvo com sucesso!");
-                    modal.style.display = 'none';
-                    formNovoLocal.reset();
-                    
-                    await carregarPontos();
-                    mapa.setView([lat, lon], 16);
-                } else {
-                    alert("Erro ao salvar local no servidor.");
-                }
+                alert("Local salvo com sucesso!");
+                modal.style.display = 'none';
+                formNovoLocal.reset();
+                
+                carregarPontos();
+                mapa.setView([lat, lon], 16);
 
             } catch (error) {
                 console.error(error);
-                alert("Erro ao processar requisição.");
+                alert("Erro ao buscar endereço.");
             } finally {
                 btnSalvar.textContent = "Salvar Local";
                 btnSalvar.disabled = false;
@@ -290,57 +299,49 @@ if (btnPerfil) {
     }
 
     // Atualiza a lista de sugestões com base no termo
-    async function updateSuggestions(term) {
+    function updateSuggestions(term) {
         if (!suggestionsEl) return;
         const raw = (term || '').trim();
         if (!raw) { suggestionsEl.innerHTML = ''; suggestionsEl.style.display = 'none'; return; }
 
         const termo = normalizeForSearch(raw);
-        
-        try {
-            const response = await fetch('http://localhost:8080/api/locais');
-            if (!response.ok) return;
-            
-            const locais = await response.json();
-            const matches = locais.filter(l => {
-                const nome = normalizeForSearch(l.nome);
-                const endereco = normalizeForSearch(l.endereco);
-                return (nome && nome.includes(termo)) || (endereco && endereco.includes(termo));
-            }).slice(0, 8);
+        const locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+        const matches = locais.filter(l => {
+            const nome = normalizeForSearch(l.nome);
+            const endereco = normalizeForSearch(l.endereco);
+            return (nome && nome.includes(termo)) || (endereco && endereco.includes(termo));
+        }).slice(0, 8);
 
-            suggestionsEl.innerHTML = '';
-            if (matches.length === 0) {
-                const no = document.createElement('div');
-                no.className = 'search-no-results';
-                no.textContent = 'Nenhum resultado encontrado';
-                suggestionsEl.appendChild(no);
-                suggestionsEl.style.display = 'block';
-                return;
-            }
-
-            matches.forEach(m => {
-                const item = document.createElement('div');
-                item.className = 'search-suggestion';
-                const title = document.createElement('div');
-                title.className = 'sug-title';
-                title.textContent = m.nome || 'Local sem nome';
-                const sub = document.createElement('div');
-                sub.className = 'sug-sub';
-                sub.textContent = m.endereco || '';
-                item.appendChild(title);
-                item.appendChild(sub);
-                item.addEventListener('click', () => {
-                    abrirPainel(m);
-                    if (m.latitude && m.longitude) mapa.setView([m.latitude, m.longitude], 16);
-                    suggestionsEl.innerHTML = '';
-                    suggestionsEl.style.display = 'none';
-                });
-                suggestionsEl.appendChild(item);
-            });
+        suggestionsEl.innerHTML = '';
+        if (matches.length === 0) {
+            const no = document.createElement('div');
+            no.className = 'search-no-results';
+            no.textContent = 'Nenhum resultado encontrado';
+            suggestionsEl.appendChild(no);
             suggestionsEl.style.display = 'block';
-        } catch (error) {
-            console.error('Erro ao buscar locais:', error);
+            return;
         }
+
+        matches.forEach(m => {
+            const item = document.createElement('div');
+            item.className = 'search-suggestion';
+            const title = document.createElement('div');
+            title.className = 'sug-title';
+            title.textContent = m.nome || 'Local sem nome';
+            const sub = document.createElement('div');
+            sub.className = 'sug-sub';
+            sub.textContent = m.endereco || '';
+            item.appendChild(title);
+            item.appendChild(sub);
+            item.addEventListener('click', () => {
+                abrirPainel(m);
+                if (m.latitude && m.longitude) mapa.setView([m.latitude, m.longitude], 16);
+                suggestionsEl.innerHTML = '';
+                suggestionsEl.style.display = 'none';
+            });
+            suggestionsEl.appendChild(item);
+        });
+        suggestionsEl.style.display = 'block';
     }
 
     // Fechar sugestões ao clicar fora
@@ -410,12 +411,12 @@ if (btnPerfil) {
     tagsChips.forEach(chip => {
         chip.addEventListener('click', function() {
             this.classList.toggle('selected');
-            const tagId = this.getAttribute('data-id'); // ✅ CORRIGIDO: Pega o ID numérico
+            const tag = this.getAttribute('data-tag'); 
             
             if (this.classList.contains('selected')) {
-                tagIdsSelecionadas.push(tagId);
+                tagIdsSelecionadas.push(tag);
             } else {
-                tagIdsSelecionadas = tagIdsSelecionadas.filter(t => t !== tagId);
+                tagIdsSelecionadas = tagIdsSelecionadas.filter(t => t !== tag);
             }
         });
     });
@@ -424,67 +425,40 @@ if (btnPerfil) {
     const textoComentarioInput = document.getElementById('novo-comentario-texto');
 
     if (btnEnviarComentario) {
-        btnEnviarComentario.addEventListener('click', async () => {
+        btnEnviarComentario.addEventListener('click', () => {
             const texto = textoComentarioInput.value;
             if (texto.trim() === "") { alert("Escreva algo!"); return; }
             
-            const userId = localStorage.getItem('userId');
             const userName = localStorage.getItem('userName') || "Você";
             
-            if (!userId) {
-                alert("Faça login para comentar.");
-                return;
-            }
+                const novoComentario = {
+                    autor: userName,
+                    texto: texto,
+                    tags: [...tagIdsSelecionadas],
+                    avatar: localStorage.getItem('userAvatar') || null
+                };
 
-            if (!localAtualId) {
-                alert("Selecione um local primeiro.");
-                return;
-            }
+            const locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+            const localIndex = locais.findIndex(l => l.id == localAtualId);
+            
+            if (localIndex !== -1) {
+                if (!locais[localIndex].comentarios) locais[localIndex].comentarios = [];
+                locais[localIndex].comentarios.unshift(novoComentario);
+                localStorage.setItem('locaisSimulados', JSON.stringify(locais));
 
-            try {
-                // INSERT direto no banco via SQL - sem JSON
-                const formData = new URLSearchParams();
-                formData.append('pessoaId', userId);
-                formData.append('descricao', texto);
-                formData.append('nota', '5');
-                if (tagIdsSelecionadas.length > 0) {
-                    formData.append('tagIds', tagIdsSelecionadas.join(','));
-                }
-
-                const response = await fetch(`http://localhost:8080/api/comentarios/direto/${localAtualId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: formData.toString()
-                });
-
-                if (response.ok) {
-                    const comentarioSalvo = await response.json();
-                    
-                    // Recarrega os comentários do local para atualizar a UI
-                    const localResponse = await fetch(`http://localhost:8080/api/locais/${localAtualId}`);
-                    if (localResponse.ok) {
-                        const localAtualizado = await localResponse.json();
-                        await abrirPainel(localAtualizado);
-                    }
-
-                    textoComentarioInput.value = "";
-                    tagIdsSelecionadas = [];
-                    tagsChips.forEach(c => c.classList.remove('selected'));
-                    
-                    alert("Comentário adicionado com sucesso!");
-                } else {
-                    alert("Erro ao adicionar comentário.");
-                }
-            } catch (error) {
-                console.error("Erro ao enviar comentário:", error);
-                alert("Erro ao conectar com o servidor.");
+                // Inserir novo comentário no topo
+                const userAvatar = localStorage.getItem('userAvatar') || null;
+                adicionarComentarioNaLista(userName, texto, tagIdsSelecionadas, locais[localIndex].id, 0, true, userAvatar);
+                // Reavaliar selo após novo comentário
+                avaliarSelo(locais[localIndex]);
+                textoComentarioInput.value = "";
+                tagIdsSelecionadas = [];
+                tagsChips.forEach(c => c.classList.remove('selected'));
             }
         });
     }
 
-    function adicionarComentarioNaLista(autor, texto, tags = [], comentarioId = null, pessoaId = null, insertAtTop = true, avatar = null) {
+    function adicionarComentarioNaLista(autor, texto, tags = [], localId = null, index = null, insertAtTop = true, avatar = null) {
         const panelComentarios = document.getElementById('panel-comentarios');
         const emptyMsg = panelComentarios.querySelector('.empty-state');
         if (emptyMsg) emptyMsg.remove();
@@ -500,27 +474,28 @@ if (btnPerfil) {
         }
         // Mostrar avatar do comentário; fallback para avatar do usuário ou ícone padrão
         const storedAvatar = localStorage.getItem('userAvatar');
-        const currentUserId = localStorage.getItem('userId');
+        const currentUser = localStorage.getItem('userName');
         let avatarHtml = `<i class="fa-solid fa-circle-user default-avatar-icon"></i>`;
         // Função fallback para gerar avatar Dicebear
         const fallbackAvatar = (name) => `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name || 'user')}`;
         if (avatar) {
             const fallback = fallbackAvatar(autor);
             avatarHtml = `<img src="${avatar}" alt="${autor}" class="comment-avatar-img" onerror="this.onerror=null;this.src='${fallback}';">`;
-        } else if (storedAvatar && currentUserId && pessoaId && currentUserId == pessoaId) {
+        } else if (storedAvatar && currentUser && autor === currentUser) {
             const fallback = fallbackAvatar(autor);
             avatarHtml = `<img src="${storedAvatar}" alt="${autor}" class="comment-avatar-img" onerror="this.onerror=null;this.src='${fallback}';">`;
         }
         // Adiciona botões de ação (editar/excluir) somente se for o autor
         let actionsHtml = '';
         try {
-            if (currentUserId && pessoaId && currentUserId == pessoaId && comentarioId !== null) {
+            const current = localStorage.getItem('userName');
+            if (current && autor === current && localId !== null && index !== null) {
                 actionsHtml = `
                     <div class="comment-actions">
-                        <button class="action-btn edit" title="Editar" onclick="editarComentarioMapa(${comentarioId})">
+                        <button class="action-btn edit" title="Editar" onclick="editarComentarioMapa(${localId}, ${index})">
                             <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button class="action-btn delete" title="Excluir" onclick="excluirComentarioMapa(${comentarioId})">
+                        <button class="action-btn delete" title="Excluir" onclick="excluirComentarioMapa(${localId}, ${index})">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -632,65 +607,33 @@ if (btnPerfil) {
         return html;
     }
 
-    // Funções globais para editar/excluir comentário via backend
-    window.editarComentarioMapa = async function(comentarioId) {
-        const novoTexto = prompt('Edite seu comentário:');
+    // Funções globais para editar/excluir comentário no mapa (sem recarregar a página)
+    window.editarComentarioMapa = function(idLocal, indexComentario) {
+        let locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+        const localIdx = locais.findIndex(l => l.id == idLocal);
+        if (localIdx === -1) return;
+
+        const textoAtual = (locais[localIdx].comentarios && locais[localIdx].comentarios[indexComentario]) ? locais[localIdx].comentarios[indexComentario].texto : '';
+        const novoTexto = prompt('Edite seu comentário:', textoAtual);
         if (novoTexto !== null && novoTexto.trim() !== '') {
-            try {
-                const response = await fetch(`http://localhost:8080/api/comentarios/${comentarioId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ descricao: novoTexto, nota: 5 })
-                });
-                
-                if (response.ok && localAtualId) {
-                    const localResponse = await fetch(`http://localhost:8080/api/locais/${localAtualId}`);
-                    if (localResponse.ok) {
-                        const localAtualizado = await localResponse.json();
-                        await abrirPainel(localAtualizado);
-                    }
-                    alert('Comentário atualizado!');
-                } else {
-                    alert('Erro ao atualizar comentário.');
-                }
-            } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao conectar com o servidor.');
-            }
+            locais[localIdx].comentarios[indexComentario].texto = novoTexto;
+            localStorage.setItem('locaisSimulados', JSON.stringify(locais));
+            // Reabrir painel para atualizar a lista
+            const localData = locais[localIdx];
+            abrirPainel(localData);
         }
     };
 
-    window.excluirComentarioMapa = async function(comentarioId) {
+    window.excluirComentarioMapa = function(idLocal, indexComentario) {
         if (!confirm('Deseja apagar este comentário?')) return;
-        
-        try {
-            const response = await fetch(`http://localhost:8080/api/comentarios/${comentarioId}`, {
-                method: 'DELETE'
-            });
-            
-            if (response.ok && localAtualId) {
-                const localResponse = await fetch(`http://localhost:8080/api/locais/${localAtualId}`);
-                if (localResponse.ok) {
-                    const localAtualizado = await localResponse.json();
-                    await abrirPainel(localAtualizado);
-                }
-                alert('Comentário excluído!');
-            } else {
-                alert('Erro ao excluir comentário.');
-            }
-        } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao conectar com o servidor.');
-        }
+        let locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
+        const localIdx = locais.findIndex(l => l.id == idLocal);
+        if (localIdx === -1) return;
+        if (!locais[localIdx].comentarios) return;
+        locais[localIdx].comentarios.splice(indexComentario, 1);
+        localStorage.setItem('locaisSimulados', JSON.stringify(locais));
+        // Reabrir painel para atualizar a lista
+        const localData = locais[localIdx];
+        abrirPainel(localData);
     };
-    // --- Lógica para abrir o modal se vier do Perfil ---
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('addLocal') === 'true') {
-        // Encontra o modal que já existe no seu código
-        const modal = document.getElementById('modal-novo-local');
-        if (modal) {
-            modal.style.display = 'flex'; // Abre o modal
-        }
-    }
-
 });

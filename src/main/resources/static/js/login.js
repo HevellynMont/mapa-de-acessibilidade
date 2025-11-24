@@ -1,8 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
 
+    if (!localStorage.getItem('usuariosSimulados')) {
+        const usuariosPadrao = [
+            { id: 1, nome: "Ana Proprietária", email: "ana@teste.com", senha: "123", tipo: "proprietario" },
+            { id: 2, nome: "João Usuário", email: "joao@teste.com", senha: "123", tipo: "usuario" }
+        ];
+        localStorage.setItem('usuariosSimulados', JSON.stringify(usuariosPadrao));
+    }
+
     if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
+        loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value.trim();
             const senha = document.getElementById('senha').value.trim();
@@ -12,43 +20,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Detecta tipo de usuário pelo localStorage ou adiciona um seletor se necessário
-            let tipo = localStorage.getItem('loginTipo') || 'usuario';
-            // Se houver um campo de seleção de tipo, use ele
-            const tipoRadio = document.querySelector('input[name="tipo"]:checked');
-            if (tipoRadio) tipo = tipoRadio.value;
-
-            try {
-                const response = await fetch('http://localhost:8080/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        senha: senha,
-                        tipo: tipo
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.sucesso) {
-                    // Salva dados do usuário logado
-                    localStorage.setItem('userId', data.id);
-                    localStorage.setItem('userName', data.nome);
-                    localStorage.setItem('userEmail', data.email);
-                    localStorage.setItem('userRole', data.tipo);
-
-                    alert(`Bem-vindo(a), ${data.nome}!`);
-                    window.location.href = '../html/mapa.html';
-                } else {
-                    alert(data.mensagem || 'Email ou senha incorretos.');
-                }
-            } catch (error) {
-                alert('Erro ao conectar com o servidor.');
-                console.error(error);
-            }
+            realizarLoginSimulado(email, senha);
         });
+    }
+
+    function realizarLoginSimulado(email, senha) {
+        const usuarios = JSON.parse(localStorage.getItem('usuariosSimulados')) || [];
+        
+        const usuarioEncontrado = usuarios.find(u => u.email === email && u.senha === senha);
+
+        if (usuarioEncontrado) {
+            localStorage.setItem('userId', usuarioEncontrado.id);
+            localStorage.setItem('userName', usuarioEncontrado.nome);
+            localStorage.setItem('userEmail', usuarioEncontrado.email);
+            localStorage.setItem('userRole', usuarioEncontrado.tipo);
+
+            alert(`Bem-vindo(a), ${usuarioEncontrado.nome}!`);
+            window.location.href = '../html/mapa.html';
+        } else {
+            alert('Email ou senha incorretos.');
+        }
     }
 });
