@@ -62,7 +62,4 @@ public class Comentario {
     @Column(name = "tag")
     @OrderColumn(name = "tag_order")
     private List<TagAcessibilidadeEnum> tags = new ArrayList<>();
-
-    @Column(name = "id_usuario", insertable = false, updatable = false)
-    private Long usuarioIdLeitura;
 }
