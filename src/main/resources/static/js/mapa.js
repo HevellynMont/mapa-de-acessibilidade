@@ -66,8 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('panel-titulo').textContent = local.nome;
         document.getElementById('panel-descricao').textContent = local.descricao || "";
         
+        // --- ALTERAÇÃO AQUI: Renderiza a estrela amarela + nota ---
         const panelNotaEl = document.getElementById('panel-nota');
-        panelNotaEl.innerHTML = renderStars(local.mediaAvaliacao || 0);
+        panelNotaEl.innerHTML = renderNota(local.mediaAvaliacao || 0);
 
         const sealEl = document.querySelector('.acessibility-seal');
         if (local.possuiSelo) {
@@ -280,17 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderStars(nota) {
-        if(!nota) nota = 0;
-        const full = Math.floor(nota);
-        const half = (nota % 1) >= 0.5;
-        let html = '';
-        for (let i = 0; i < full; i++) html += '<i class="fa-solid fa-star" style="color: gold;"></i>';
-        if (half) html += '<i class="fa-solid fa-star-half-stroke" style="color: gold;"></i>';
-        const total = full + (half ? 1 : 0);
-        for(let j = total; j < 5; j++) html += '<i class="fa-regular fa-star" style="color: #ccc;"></i>';
-        html += ` <span style="font-size:0.9em; color:#666">(${nota.toFixed(1)})</span>`;
-        return html;
+    function renderNota(nota) {
+        if (nota === null || nota === undefined) nota = 0;
+        return `<i class="fa-solid fa-star" style="color: gold; font-size: 1.2em;"></i> <span style="font-size: 1em;">${nota.toFixed(1)}/5</span>`;
     }
 
     document.getElementById('panel-close').addEventListener('click', () => {
