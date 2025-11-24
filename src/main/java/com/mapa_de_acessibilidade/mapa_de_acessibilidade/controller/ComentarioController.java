@@ -1,5 +1,6 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.BeanUtils;
@@ -18,14 +19,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.request.ComentarioRequestDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.response.ComentarioResponseDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Comentario;
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.enums.TagAcessibilidadeEnum;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.service.ComentarioService;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/comentarios")
-@Tag(name = "Comentários")
 public class ComentarioController {
 
     @Autowired
@@ -34,9 +34,19 @@ public class ComentarioController {
     @PostMapping
     public ResponseEntity<ComentarioResponseDTO> criar(@RequestBody @Valid ComentarioRequestDTO dto) {
         Comentario c = new Comentario();
+        
         BeanUtils.copyProperties(dto, c);
 
-        Comentario salvo = service.salvar(c, dto.getIdUsuario(), dto.getIdLocal(), dto.getTags());
+        List<TagAcessibilidadeEnum> tagsEnum = new ArrayList<>();
+        if (dto.getTags() != null) {
+            for (String t : dto.getTags()) {
+                try {
+                    tagsEnum.add(TagAcessibilidadeEnum.valueOf(t));
+                } catch (IllegalArgumentException e) {
+                }
+            }
+        }
+        Comentario salvo = service.salvar(c, dto.getIdUsuario(), dto.getIdLocal(), tagsEnum);
 
         var uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(salvo.getId()).toUri();

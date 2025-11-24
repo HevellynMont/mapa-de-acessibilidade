@@ -36,7 +36,7 @@ public class ComentarioService {
     @Transactional
     public Comentario salvar(Comentario c, Long idUser, Long idLocal, List<TagAcessibilidadeEnum> tagsEnum) {
         Usuario usuario = usuarioRepo.findById(idUser)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado. ID: " + idUser));
 
         Local local = localRepo.findById(idLocal)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Local não encontrado"));
@@ -51,7 +51,7 @@ public class ComentarioService {
         }
 
         Comentario salvo = comentarioRepo.save(c);
-
+        
         localService.recalcularReputacao(idLocal);
 
         return salvo;
@@ -69,17 +69,20 @@ public class ComentarioService {
     @Transactional
     public Comentario atualizar(Long id, ComentarioRequestDTO dto) {
         Comentario c = buscarPorId(id);
-
         c.setTexto(dto.getTexto());
 
         if (dto.getTags() != null) {
-            c.setTags(new ArrayList<>(dto.getTags()));
+            List<TagAcessibilidadeEnum> novasTags = new ArrayList<>();
+            for (String t : dto.getTags()) {
+                try {
+                    novasTags.add(TagAcessibilidadeEnum.valueOf(t));
+                } catch (Exception e) {}
+            }
+            c.setTags(novasTags);
         }
 
         Comentario atualizado = comentarioRepo.save(c);
-        
         localService.recalcularReputacao(c.getLocal().getId());
-        
         return atualizado;
     }
 
@@ -87,9 +90,7 @@ public class ComentarioService {
     public void deletar(Long id) {
         Comentario c = buscarPorId(id);
         Long idLocal = c.getLocal().getId();
-        
         comentarioRepo.deleteById(id);
-        
         localService.recalcularReputacao(idLocal);
     }
 }

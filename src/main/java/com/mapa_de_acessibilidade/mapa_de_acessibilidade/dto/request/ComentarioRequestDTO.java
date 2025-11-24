@@ -2,8 +2,6 @@ package com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.request;
 
 import java.util.List;
 
-import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.enums.TagAcessibilidadeEnum;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -20,7 +18,7 @@ public class ComentarioRequestDTO {
     @NotNull(message = "ID do Local é obrigatório")
     private Long idLocal;
 
-    private List<TagAcessibilidadeEnum> tags;
+    private List<String> tags;
 
     public ComentarioRequestDTO() {
     }
@@ -57,11 +55,11 @@ public class ComentarioRequestDTO {
         this.idLocal = idLocal;
     }
 
-    public List<TagAcessibilidadeEnum> getTags() {
+    public List<String> getTags() {
         return tags;
     }
 
-    public void setTags(List<TagAcessibilidadeEnum> tags) {
+    public void setTags(List<String> tags) {
         this.tags = tags;
     }
 }

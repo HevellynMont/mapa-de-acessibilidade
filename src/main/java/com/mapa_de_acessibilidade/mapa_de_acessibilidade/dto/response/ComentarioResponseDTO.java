@@ -19,20 +19,25 @@ public class ComentarioResponseDTO {
     
     private Long id;
     private String texto;
+    private Double nota;
     private Long idUsuario;
-    private String nomeUsuario; 
+    private String nomeUsuario;
     private Long idLocal;
-    private String nomeLocal;   
+    private String nomeLocal;
     private List<String> tags;
 
     public static ComentarioResponseDTO toResponseDTO(Comentario c) {
         ComentarioResponseDTO dto = new ComentarioResponseDTO();
+        
         dto.setId(c.getId());
         dto.setTexto(c.getTexto());
-        
+        dto.setNota(c.getNota());
+
+        // VINCULAÇÃO DO USUÁRIO
         if (c.getUsuario() != null) {
             dto.setIdUsuario(c.getUsuario().getId());
             dto.setNomeUsuario(c.getUsuario().getNome());
+        } else {
             dto.setIdUsuario(0L);
             dto.setNomeUsuario("Anônimo");
         }
@@ -41,14 +46,14 @@ public class ComentarioResponseDTO {
             dto.setIdLocal(c.getLocal().getId());
             dto.setNomeLocal(c.getLocal().getNome());
         }
-        
-        List<String> tagsString = new ArrayList<>();
+
+        List<String> tagsList = new ArrayList<>();
         if (c.getTags() != null) {
             for (TagAcessibilidadeEnum t : c.getTags()) {
-                tagsString.add(t.name()); 
+                tagsList.add(t.name());
             }
         }
-        dto.setTags(tagsString);
+        dto.setTags(tagsList);
 
         return dto;
     }
