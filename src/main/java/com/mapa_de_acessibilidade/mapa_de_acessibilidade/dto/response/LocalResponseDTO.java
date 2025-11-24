@@ -19,6 +19,7 @@ public class LocalResponseDTO {
     private String descricao;
     private Double latitude;
     private Double longitude;
+    private Long idProprietario;
     private String nomeProprietario;
     private Double mediaAvaliacao;
     private Boolean possuiSelo;
@@ -31,7 +32,8 @@ public class LocalResponseDTO {
                 l.getDescricao(),
                 l.getLatitude(),
                 l.getLongitude(),
-                l.getProprietario().getNome(),
+                l.getProprietario() != null ? l.getProprietario().getId() : null,
+                l.getProprietario() != null ? l.getProprietario().getNome() : "Desconhecido",
                 l.getMediaAvaliacao(),
                 l.getPossuiSelo());
     }

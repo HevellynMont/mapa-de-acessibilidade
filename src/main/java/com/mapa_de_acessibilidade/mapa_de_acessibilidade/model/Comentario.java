@@ -3,7 +3,6 @@ package com.mapa_de_acessibilidade.mapa_de_acessibilidade.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Interface.ComentarioInterface;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.enums.TagAcessibilidadeEnum;
 
 import jakarta.persistence.CollectionTable;
@@ -20,20 +19,31 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
 @Entity
 @Table(name = "comentario")
+@Getter
+@Setter
 @NoArgsConstructor
-public class Comentario implements ComentarioInterface {
+@AllArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class Comentario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1000)
+    @ToString.Include
     private String texto;
 
     private Double nota;
@@ -52,4 +62,7 @@ public class Comentario implements ComentarioInterface {
     @Column(name = "tag")
     @OrderColumn(name = "tag_order")
     private List<TagAcessibilidadeEnum> tags = new ArrayList<>();
+
+    @Column(name = "id_usuario", insertable = false, updatable = false)
+    private Long usuarioIdLeitura;
 }

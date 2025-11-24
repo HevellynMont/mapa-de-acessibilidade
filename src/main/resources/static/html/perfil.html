@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,15 +7,11 @@
     <link rel="stylesheet" href="../css/perfil.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-
 <body>
-
     <main class="profile-container">
-
         <nav class="profile-nav">
             <a href="mapa.html"><i class="fa-solid fa-chevron-left"></i> Voltar ao Mapa</a>
         </nav>
-
         <section class="profile-header">
             <div class="profile-picture">
                 <div class="img-container" id="img-container">
@@ -25,9 +20,7 @@
                 <h3 id="user-role-label">Usuário</h3>
                 <button id="btn-trocar-imagem" class="edit-avatar-btn">Trocar imagem</button>
             </div>
-
             <div class="profile-details">
-
                 <div class="info">
                     <div class="info-field">
                         <label for="user-name-input">Nome:</label>
@@ -35,7 +28,6 @@
                     </div>
                     <button id="btn-edit-name" class="change-btn">Editar</button>
                 </div>
-
                 <div class="info">
                     <div class="info-field">
                         <label for="user-email-input">E-mail:</label>
@@ -43,58 +35,40 @@
                     </div>
                     <button id="btn-edit-email" class="change-btn">Editar</button>
                 </div>
-
                 <div class="info">
                     <div class="info-field">
                         <label for="user-pass-input">Senha:</label>
-                        <input type="password" id="user-pass-input" value="123456" disabled>
+                        <input type="password" id="user-pass-input" value="******" disabled>
                     </div>
                     <button id="btn-edit-pass" class="change-btn">Alterar</button>
                 </div>
-
                 <button id="btn-logout" class="logout-btn">Sair da Conta</button>
             </div>
         </section>
-
         <hr class="divider">
-
         <section class="profile-activity">
-
             <div class="content-column" id="col-comentarios">
                 <h2>Meus Comentários</h2>
-                <div id="lista-comentarios" class="cards-list">
-                    <p class="empty-state">Nenhum comentário feito.</p>
-                </div>
+                <div id="lista-comentarios" class="cards-list"></div>
             </div>
-
             <div class="content-column" id="col-meus-locais">
                 <h2>Locais Gerenciados</h2>
-                <div id="lista-meus-locais" class="cards-list">
-                    <p class="empty-state">Nenhum local cadastrado.</p>
-                </div>
+                <div id="lista-meus-locais" class="cards-list"></div>
                 <button class="add-new-btn" onclick="window.adicionarNovoLocalPerfil()">
                     + Adicionar Novo Local
                 </button>
             </div>
-
         </section>
-
     </main>
 
     <div id="modal-avatar" class="modal-overlay">
         <div class="modal-content">
             <h3>Escolha um Avatar</h3>
-            <div class="avatar-grid">
-                <img src="https://i.pravatar.cc/150?img=68" class="avatar-option">
-                <img src="https://i.pravatar.cc/150?img=60" class="avatar-option">
-                <img src="https://i.pravatar.cc/150?img=12" class="avatar-option">
-                <img src="https://i.pravatar.cc/150?img=32" class="avatar-option">
-            </div>
+            <div class="avatar-grid"></div>
             <button id="btn-fechar-avatar">Cancelar</button>
         </div>
     </div>
-
+    <script src="../js/config.js"></script>
     <script src="../js/perfil.js"></script>
 </body>
-
 </html>

@@ -8,16 +8,18 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "proprietario")
 @PrimaryKeyJoinColumn(name = "id")
+@Getter
+@Setter
 @NoArgsConstructor
+@ToString(callSuper = true, onlyExplicitlyIncluded = true)
 public class Proprietario extends Pessoa {
 
     @OneToMany(mappedBy = "proprietario", cascade = CascadeType.ALL, orphanRemoval = true)
