@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar - Mapa de Acessibilidade</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/login.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h1>MAPA DE<br>ACESSIBILIDADE</h1>
+            <div class="description">
+                <p class="desc-title">Descubra lugares acessíveis.<br>Compartilhe inclusão.</p>
+                <p class="desc-subtitle">Juntos nessa jornada por uma cidade sem barreiras!</p>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <h2>Entrar</h2>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <input type="email" id="email" placeholder="Digite seu email..." required>
+                </div>
+
+                <div class="input-group">
+                    <input type="password" id="senha" placeholder="Digite sua senha..." required>
+                </div>
+
+                <div class="toggle-row" style="margin: 15px 0;">
+                    <div class="toggle">
+                        <input type="radio" id="user-login" name="tipo" value="usuario" checked>
+                        <label for="user-login">Usuário comum</label>
+
+                        <input type="radio" id="prop-login" name="tipo" value="proprietario">
+                        <label for="prop-login">Proprietário</label>
+                    </div>
+                </div>
+
+                <div class="links">
+                    <a href="cadastro.html" class="link">Cadastre-se</a>
+                    <a href="#" class="link">Esqueceu a senha?</a>
+                </div>
+
+                <button type="submit" class="btn-entrar" id="btn-entrar">Entrar</button>
+            </form>
+        </div>
+    </div>
+    <script src="../js/login.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha - Mapa de Acessibilidade</title>
+    <link rel="stylesheet" href="../css/redefinir_senha.css">
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h1>MAPA DE<br>ACESSIBILIDADE</h1>
+            <div class="description">
+                <p class="desc-title">Descubra lugares acessíveis.<br>Compartilhe inclusão.</p>
+                <p class="desc-subtitle">Não abandone sua missão! Estamos juntos nessa jornada por uma cidade sem barreiras!</p>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <h2>Redefinir Senha</h2>
+            
+            <form id="redefinirForm">
+                <div class="input-group">
+                    <input type="email" id="email" placeholder="Digite seu email..." required>
+                </div>
+                
+                <div id="mensagem" class="mensagem">
+                    Um link de recuperação foi enviado para o seu email!
+                </div>
+                
+                <div class="link-container">
+                    <a href="../html/login.html" class="link">Logar</a>
+                </div>
+                
+                <button type="submit" class="btn-enviar">Enviar</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('redefinirForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const mensagem = document.getElementById('mensagem');
+            
+            mensagem.style.display = 'block';
+            
+            setTimeout(function() {
+                window.location.href = '../html/login.html';
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

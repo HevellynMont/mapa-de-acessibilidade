@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Acessibilidade</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/mapa.css">
+</head>
+
+<body>
+
+    <div id="mapa"></div>
+
+    <div class="search-bar-container">
+        <input type="text" class="search-input" placeholder="Pesquisar local...">
+        <button class="search-btn">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+    </div>
+
+    <aside class="details-panel" id="panel-detalhes">
+
+        <button class="panel-close-btn" id="panel-close">&times;</button>
+
+        <div class="panel-header">
+            <div class="image-wrapper">
+                <img src="" alt="Local" id="panel-imagem-principal">
+                <div id="panel-imagem-placeholder" class="no-image-state">
+                    <i class="fa-regular fa-image"></i>
+                    <span>Sem foto disponível</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-body">
+
+            <h2 id="panel-titulo">Nome do Local</h2>
+
+            <div class="acessibility-seal">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Selo de acessibilidade</span>
+            </div>
+            <div id="panel-nota"></div>
+
+            <p id="panel-descricao"></p>
+
+            <div class="user-rating-section">
+                <h3>Avalie sua experiência</h3>
+
+                <div class="rating-input-wrapper">
+                    <div class="user-avatar-icon">
+                        <i class="fa-solid fa-circle-user"></i>
+                    </div>
+                </div>
+
+                <textarea id="novo-comentario-texto" placeholder="Conte o que você achou..." rows="2"></textarea>
+
+                <div class="tags-acessibilidade">
+                    <p>Quais recursos você encontrou?</p>
+                    <div class="tags-wrapper">
+                        <span class="tag-chip" data-id="1" data-tag="Rampa">Rampa de Acesso</span>
+                        <span class="tag-chip" data-id="2" data-tag="Elevador">Elevador</span>
+                        <span class="tag-chip" data-id="3" data-tag="Banheiro Adaptado">Banheiro Adaptado</span>
+                        <span class="tag-chip" data-id="4" data-tag="Piso Tátil">Piso Tátil</span>
+                        <span class="tag-chip" data-id="5" data-tag="Braille">Sinalização em Braille</span>
+                        <span class="tag-chip" data-id="6" data-tag="Libras">Intérprete de Libras</span>
+                        <span class="tag-chip" data-id="7" data-tag="Estacionamento">Vaga Exclusiva</span>
+                        <span class="tag-chip" data-id="8" data-tag="Acesso">Acesso para Cadeirantes</span>
+                    </div>
+                    <button id="btn-enviar-avaliacao" class="btn-enviar">Publicar</button>
+                </div>
+            </div>
+
+            <hr class="panel-divider">
+
+            <h3>Comentários Recentes</h3>
+            <div id="panel-comentarios"></div>
+        </div>
+
+        <div class="resize-handle"></div>
+    </aside>
+
+    <div id="modal-novo-local" class="modal-overlay">
+        <div class="modal-content">
+            <button id="close-modal">&times;</button>
+
+            <form id="form-novo-local">
+
+                <h2>Adicionar Novo Local Acessível</h2>
+
+                <label for="local-nome">Nome do Local</label>
+                <input type="text" id="local-nome" required>
+
+                <label for="local-endereco">Endereço Completo</label>
+                <input type="text" id="local-endereco" required>
+
+                <label for="local-descricao">Breve Descrição</label>
+                <textarea id="local-descricao" rows="2" required></textarea>
+
+                <button type="submit" class="btn-salvar">Salvar Local</button>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="floating-buttons">
+        <button id="btn-zoom-out"><i class="fa-solid fa-plus"></i></button>
+        <button id="btn-zoom-in"><i class="fa-solid fa-gear"></i></button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="../js/mapa.js"></script>
+
+</body>
+
+</html>

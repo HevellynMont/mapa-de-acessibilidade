@@ -1,0 +1,56 @@
+/* === Global Variables === */
+
+:root {
+    --verde-clarinho: #CFE1BB;
+    --verde-claro: #BCCDA0;
+    --verde-medio: #8a9a5b;
+    --verde-musgo: #585D39;
+    --verde-generico: #8BC34A;
+
+    --branco: #ffffff;
+    --cinza-claro: #f5f5f5;
+    --texto-escuro: #333333;
+
+    --bg: #c5dac1;
+    --panel-left: #b8c9a8;
+    --primario-escuro: #5a6e4a;
+    --texto-claro: #666666;
+    --cinza-escuro: #555555;
+    --dourado: #FFD700;
+    --danger: #E57373;
+    --verde-suave: #c1f586;
+    --vermelho-suave: #fcaaaa;
+    --off-white: #f9f9f9;
+    --fundo-suave: #eff8e5;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    font-family: 'Arial', sans-serif;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--verde-musgo);
+}
