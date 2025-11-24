@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.client.NominatimClient;
-import com.mapa_de_acessibilidade.mapa_de_acessibilidade.client.dto.NominatimResponseDTO;
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.client.dto.NominatimResponse;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.request.LocalRequestDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Comentario;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Local;
@@ -41,14 +41,17 @@ public class LocalService {
         Proprietario dono = donoOpt.get();
         local.setProprietario(dono);
 
-        if (local.getId() == null || local.getLatitude() == null) {
-            Optional<NominatimResponseDTO> coordsOpt = nominatimClient.buscarCoordenadas(local.getEndereco());
-            if (coordsOpt.isPresent()) {
-                NominatimResponseDTO coords = coordsOpt.get();
-                local.setLatitude(coords.getLatitude());
-                local.setLongitude(coords.getLongitude());
-            }
+        Optional<NominatimResponse> coordsOpt = nominatimClient.buscarCoordenadas(local.getEndereco());
+
+        if (coordsOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Endereço não localizado no mapa. Verifique o nome da rua/cidade.");
         }
+
+        NominatimResponse coords = coordsOpt.get();
+        local.setLatitude(coords.getLatitude());
+        local.setLongitude(coords.getLongitude());
+
         return localRepo.save(local);
     }
 
@@ -66,11 +69,19 @@ public class LocalService {
 
     public Local atualizar(Long id, LocalRequestDTO dto) {
         Local local = buscarPorId(id);
+
+        String enderecoAntigo = local.getEndereco();
+
         BeanUtils.copyProperties(dto, local, "idProprietario");
 
-        Optional<NominatimResponseDTO> coordsOpt = nominatimClient.buscarCoordenadas(local.getEndereco());
-        if (coordsOpt.isPresent()) {
-            NominatimResponseDTO coords = coordsOpt.get();
+        if (!local.getEndereco().equals(enderecoAntigo)) {
+            Optional<NominatimResponse> coordsOpt = nominatimClient.buscarCoordenadas(local.getEndereco());
+
+            if (coordsOpt.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Novo endereço não localizado no mapa.");
+            }
+
+            NominatimResponse coords = coordsOpt.get();
             local.setLatitude(coords.getLatitude());
             local.setLongitude(coords.getLongitude());
         }
@@ -138,6 +149,7 @@ public class LocalService {
         }
 
         mediaFinal = Math.round(mediaFinal * 10.0) / 10.0;
+
         local.setMediaAvaliacao(mediaFinal);
 
         if (mediaFinal >= 3.0) {
