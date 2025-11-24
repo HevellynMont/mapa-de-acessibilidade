@@ -36,13 +36,18 @@ document.addEventListener('DOMContentLoaded', () => {
     async function carregarLocais() {
         try {
             const locais = await fetchAPI('/locais');
-            
+
             todosMarcadores.forEach(m => mapa.removeLayer(m.marker));
             todosMarcadores = [];
 
             locais.forEach(local => {
                 if (local.latitude && local.longitude) {
-                    const iconColor = local.possuiSelo ? 'green' : 'grey';
+                    let iconColor = 'grey';
+                    if (local.possuiSelo) {
+                        iconColor = 'green';
+                    } else if (local.mediaAvaliacao !== null && local.mediaAvaliacao > 0 && local.mediaAvaliacao < 2.5) {
+                        iconColor = 'red';
+                    }
                     const icon = criarIcone(iconColor);
 
                     const marcador = L.marker([local.latitude, local.longitude], { icon: icon });
@@ -65,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localAtualId = local.id;
         document.getElementById('panel-titulo').textContent = local.nome;
         document.getElementById('panel-descricao').textContent = local.descricao || "";
-        
+
         // --- ALTERAÇÃO AQUI: Renderiza a estrela amarela + nota ---
         const panelNotaEl = document.getElementById('panel-nota');
         panelNotaEl.innerHTML = renderNota(local.mediaAvaliacao || 0);
@@ -85,11 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ratingSection = document.querySelector('.user-rating-section');
         if (userRole === 'proprietario') {
-            if(ratingSection) ratingSection.style.display = 'none';
+            if (ratingSection) ratingSection.style.display = 'none';
         } else {
-            if(ratingSection) ratingSection.style.display = 'block';
+            if (ratingSection) ratingSection.style.display = 'block';
             const myAvatarIcon = document.querySelector('.user-avatar-icon');
-            if(myAvatarIcon && userAvatar) {
+            if (myAvatarIcon && userAvatar) {
                 myAvatarIcon.innerHTML = `<img src="${userAvatar}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
             }
         }
@@ -195,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnEnviar) {
         btnEnviar.addEventListener('click', async () => {
             if (!userId) { alert("Faça login para avaliar."); return; }
-            
+
             const textoDigitado = document.getElementById('novo-comentario-texto').value;
             const tagsSelecionadas = Array.from(document.querySelectorAll('.tag-chip.selected')).map(el => el.dataset.key);
 
@@ -216,11 +221,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
-                
+
                 document.getElementById('novo-comentario-texto').value = '';
                 document.querySelectorAll('.tag-chip').forEach(el => el.classList.remove('selected'));
-                
-                await carregarLocais(); 
+
+                await carregarLocais();
                 const localRecarregado = todosMarcadores.find(m => m.local.id === localAtualId).local;
                 abrirPainel(localRecarregado);
             } catch (error) {
@@ -229,14 +234,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    window.deletarComentario = async function(id) {
-        if(confirm("Apagar comentário?")) {
+    window.deletarComentario = async function (id) {
+        if (confirm("Apagar comentário?")) {
             try {
                 await fetchAPI(`/comentarios/${id}`, { method: 'DELETE' });
                 await carregarLocais();
                 const localRecarregado = todosMarcadores.find(m => m.local.id === localAtualId).local;
                 abrirPainel(localRecarregado);
-            } catch(e) {
+            } catch (e) {
                 alert("Erro ao excluir.");
             }
         }
@@ -293,12 +298,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-zoom-in')?.addEventListener('click', () => window.location.href = 'perfil.html');
     document.getElementById('close-modal')?.addEventListener('click', () => document.getElementById('modal-novo-local').style.display = 'none');
-    if(btnAddLocal) btnAddLocal.addEventListener('click', () => document.getElementById('modal-novo-local').style.display = 'flex');
+    if (btnAddLocal) btnAddLocal.addEventListener('click', () => document.getElementById('modal-novo-local').style.display = 'flex');
 
     function configurarBusca() {
         const searchInput = document.querySelector('.search-input');
         const searchContainer = document.querySelector('.search-bar-container');
-        
+
         let suggestionsEl = document.createElement('div');
         suggestionsEl.className = 'search-suggestions';
         suggestionsEl.style.display = 'none';
@@ -307,14 +312,14 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             suggestionsEl.innerHTML = '';
-            if(!term) { suggestionsEl.style.display = 'none'; return; }
+            if (!term) { suggestionsEl.style.display = 'none'; return; }
 
-            const matches = todosMarcadores.filter(m => 
-                m.local.nome.toLowerCase().includes(term) || 
+            const matches = todosMarcadores.filter(m =>
+                m.local.nome.toLowerCase().includes(term) ||
                 m.local.endereco.toLowerCase().includes(term)
             ).slice(0, 5);
 
-            if(matches.length === 0) { suggestionsEl.style.display = 'none'; return; }
+            if (matches.length === 0) { suggestionsEl.style.display = 'none'; return; }
 
             matches.forEach(m => {
                 const div = document.createElement('div');
@@ -332,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.addEventListener('click', (e) => {
-            if(!searchContainer.contains(e.target)) suggestionsEl.style.display = 'none';
+            if (!searchContainer.contains(e.target)) suggestionsEl.style.display = 'none';
         });
     }
 
