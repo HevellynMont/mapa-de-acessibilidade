@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -20,21 +21,28 @@ import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.response.Proprietar
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Proprietario;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.service.ProprietarioService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/proprietarios")
 public class ProprietarioController implements ProprietarioControllerOpenAPI {
+
     @Autowired
     private ProprietarioService service;
 
     @PostMapping
     public ResponseEntity<?> criar(@RequestBody @Valid ProprietarioRequestDTO dto) {
         Proprietario p = new Proprietario();
+
         BeanUtils.copyProperties(dto, p);
+
         Proprietario salvo = service.salvar(p);
-        var uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(salvo.getId()).toUri();
+
+        var uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(salvo.getId())
+                .toUri();
+
         return ResponseEntity.created(uri).body(ProprietarioResponseDTO.toResponseDTO(salvo));
     }
 

@@ -32,12 +32,15 @@ public class LocalController {
     private LocalService localService;
 
     @PostMapping
-    public ResponseEntity<Local> criar(@RequestBody @Valid LocalRequestDTO dto) {
+    public ResponseEntity<LocalResponseDTO> criar(@RequestBody @Valid LocalRequestDTO dto) {
         Local local = new Local();
         BeanUtils.copyProperties(dto, local);
+
         Local salvo = localService.salvar(local, dto.getIdProprietario());
+
         var uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(salvo.getId()).toUri();
-        return ResponseEntity.created(uri).body(salvo);
+
+        return ResponseEntity.created(uri).body(LocalResponseDTO.toResponseDTO(salvo));
     }
 
     @GetMapping

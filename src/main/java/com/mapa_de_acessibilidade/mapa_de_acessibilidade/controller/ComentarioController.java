@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.request.ComentarioRequestDTO;
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.response.ComentarioResponseDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Comentario;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.service.ComentarioService;
 
@@ -31,7 +32,7 @@ public class ComentarioController {
     private ComentarioService service;
 
     @PostMapping
-    public ResponseEntity<Comentario> criar(@RequestBody @Valid ComentarioRequestDTO dto) {
+    public ResponseEntity<ComentarioResponseDTO> criar(@RequestBody @Valid ComentarioRequestDTO dto) {
         Comentario c = new Comentario();
         BeanUtils.copyProperties(dto, c);
 
@@ -39,17 +40,21 @@ public class ComentarioController {
 
         var uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(salvo.getId()).toUri();
-        return ResponseEntity.created(uri).body(salvo);
+
+        return ResponseEntity.created(uri).body(ComentarioResponseDTO.toResponseDTO(salvo));
     }
 
     @GetMapping("/local/{idLocal}")
-    public ResponseEntity<List<Comentario>> listarPorLocal(@PathVariable Long idLocal) {
-        return ResponseEntity.ok(service.listarPorLocal(idLocal));
+    public ResponseEntity<List<ComentarioResponseDTO>> listarPorLocal(@PathVariable Long idLocal) {
+        List<Comentario> lista = service.listarPorLocal(idLocal);
+        return ResponseEntity.ok(ComentarioResponseDTO.toResponsesDTO(lista));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Comentario> atualizar(@PathVariable Long id, @RequestBody @Valid ComentarioRequestDTO dto) {
-        return ResponseEntity.ok(service.atualizar(id, dto));
+    public ResponseEntity<ComentarioResponseDTO> atualizar(@PathVariable Long id,
+            @RequestBody @Valid ComentarioRequestDTO dto) {
+        Comentario atualizado = service.atualizar(id, dto);
+        return ResponseEntity.ok(ComentarioResponseDTO.toResponseDTO(atualizado));
     }
 
     @DeleteMapping("/{id}")

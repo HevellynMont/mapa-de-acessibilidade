@@ -6,14 +6,9 @@ import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.enums.TagAcessibi
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ComentarioRequestDTO {
+
     @NotBlank(message = "Texto é obrigatório")
     private String texto;
 
@@ -26,4 +21,47 @@ public class ComentarioRequestDTO {
     private Long idLocal;
 
     private List<TagAcessibilidadeEnum> tags;
+
+    public ComentarioRequestDTO() {
+    }
+
+    public String getTexto() {
+        return texto;
+    }
+
+    public void setTexto(String texto) {
+        this.texto = texto;
+    }
+
+    public Double getNota() {
+        return nota;
+    }
+
+    public void setNota(Double nota) {
+        this.nota = nota;
+    }
+
+    public Long getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(Long idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+
+    public Long getIdLocal() {
+        return idLocal;
+    }
+
+    public void setIdLocal(Long idLocal) {
+        this.idLocal = idLocal;
+    }
+
+    public List<TagAcessibilidadeEnum> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<TagAcessibilidadeEnum> tags) {
+        this.tags = tags;
+    }
 }
