@@ -15,18 +15,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.controller.openapi.LocalControllerOpenAPI;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.request.LocalRequestDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.response.LocalResponseDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Local;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.service.LocalService;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/locais")
-@Tag(name = "Locais")
-public class LocalController {
+public class LocalController implements LocalControllerOpenAPI{
 
     @Autowired
     private LocalService localService;

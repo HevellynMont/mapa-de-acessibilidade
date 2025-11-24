@@ -8,14 +8,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.controller.openapi.TagAcessibilidadeControllerOpenAPI;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.enums.TagAcessibilidadeEnum;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/tags")
-@Tag(name = "Tags de Acessibilidade")
-public class TagAcessibilidadeController {
+public class TagAcessibilidadeController implements TagAcessibilidadeControllerOpenAPI {
 
     @GetMapping
     public ResponseEntity<List<TagAcessibilidadeEnum>> listar() {

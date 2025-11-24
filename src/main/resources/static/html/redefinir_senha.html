@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redefinir Senha - Mapa de Acessibilidade</title>
-    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3013/3013139.png" type="image/png">
+    <link rel="icon" href="https://pt.wikipedia.org/wiki/Ficheiro:Wheelchair_symbol_big.gif" type="image/png">
     <link rel="stylesheet" href="../css/redefinir_senha.css">
 </head>
 <body>
@@ -47,20 +47,17 @@
             const mensagem = document.getElementById('mensagem');
             const btn = document.querySelector('.btn-enviar');
             
-            // Reset visual
             mensagem.style.display = 'none';
-            mensagem.className = 'mensagem'; // Reseta classes de estilo se houver
+            mensagem.className = 'mensagem';
             btn.disabled = true;
             btn.textContent = "Buscando...";
             
             try {
                 let usuarioEncontrado = null;
 
-                // 1. Tenta buscar em Usuários Comuns
                 const usuarios = await fetchAPI('/usuarios');
                 usuarioEncontrado = usuarios.find(u => u.email === email);
 
-                // 2. Se não achar, busca em Proprietários
                 if (!usuarioEncontrado) {
                     const proprietarios = await fetchAPI('/proprietarios');
                     usuarioEncontrado = proprietarios.find(p => p.email === email);
@@ -75,7 +72,6 @@
                     mensagem.style.border = "1px solid #c3e6cb";
                     mensagem.innerHTML = `Sua senha é: <strong>${usuarioEncontrado.senha}</strong>`;
                     
-                    // Redireciona após 5 segundos para dar tempo de ler
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 5000);

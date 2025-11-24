@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.controller.openapi.ComentarioControllerOpenAPI;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.request.ComentarioRequestDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.response.ComentarioResponseDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Comentario;
@@ -26,7 +27,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/comentarios")
-public class ComentarioController {
+public class ComentarioController implements ComentarioControllerOpenAPI {
 
     @Autowired
     private ComentarioService service;
