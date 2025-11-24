@@ -1,339 +1,312 @@
 document.addEventListener('DOMContentLoaded', () => {
-
-    // 1. DADOS DO USUÁRIO
     const userId = localStorage.getItem('userId');
-    const userName = localStorage.getItem('userName') || "Usuário";
-    const userEmail = localStorage.getItem('userEmail') || "email@teste.com";
-    const userRole = localStorage.getItem('userRole') || "usuario";
+    const userRole = localStorage.getItem('userRole');
 
-    // Redireciona se não estiver logado
-    if (!localStorage.getItem('userRole')) {
+    if (!userId) {
         window.location.href = '../html/login.html';
+        return;
     }
 
-    // Preencher Campos
-    const inputName = document.getElementById('user-name-input');
-    const inputEmail = document.getElementById('user-email-input');
-    
-    if(inputName) inputName.value = userName;
-    if(inputEmail) inputEmail.value = userEmail;
-    
-    const roleLabel = document.getElementById('user-role-label');
-    if(roleLabel) roleLabel.textContent = userRole === 'proprietario' ? 'Proprietário' : 'Usuário Comum';
+    carregarDados();
+    configurarEdicao();
 
-    // Avatar
-    const avatarSalvo = localStorage.getItem('userAvatar');
-    if (avatarSalvo) {
-        document.querySelector('.img-container').innerHTML = `<img src="${avatarSalvo}">`;
-    }
-
-    // 2. CONTROLE DE COLUNAS (Quem vê o quê)
-    const colComentarios = document.getElementById('col-comentarios');
-    const colMeusLocais = document.getElementById('col-meus-locais');
-    const colFavoritos = document.getElementById('col-favoritos');
-
-    if(colFavoritos) colFavoritos.style.display = 'none';
-
-    if (userRole === 'proprietario') {
-        // PROPRIETÁRIO: Vê Locais, NÃO VÊ Comentários
-        if(colComentarios) colComentarios.style.display = 'none';
-        if(colMeusLocais) {
-            colMeusLocais.style.display = 'flex'; 
-            colMeusLocais.style.flexDirection = 'column';
-            carregarLocaisDoProprietario(userId);
-        }
-    } else {
-        // USUÁRIO: Vê Comentários, NÃO VÊ Locais
-        if(colMeusLocais) colMeusLocais.style.display = 'none';
-        if(colComentarios) {
-            colComentarios.style.display = 'flex';
-            colComentarios.style.flexDirection = 'column';
-            carregarMeusComentarios(userName);
-        }
-    }
-
-    // 3. FUNÇÕES DE CARREGAMENTO
-
-    function carregarLocaisDoProprietario(id) {
-        const locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
-        // Filtra apenas os locais desse dono
-        const meus = locais.filter(l => l.proprietarioId == id);
-        
-        const lista = document.getElementById('lista-meus-locais');
-        lista.innerHTML = '';
-
-        if(meus.length === 0) {
-            lista.innerHTML = '<p class="empty-state">Nenhum local cadastrado.</p>';
-            return;
-        }
-
-        // Helper: calcula nota 0..5 baseada na proporção de comentários com tags
-        function calcularNotaAcessibilidade(local) {
-            const comentarios = (local && local.comentarios) ? local.comentarios : [];
-            if (comentarios.length === 0) return 0;
-            const comTags = comentarios.filter(c => c.tags && c.tags.length > 0).length;
-            const ratio = comTags / comentarios.length;
-            const media = ratio * 5;
-            return Math.round(media * 10) / 10;
-        }
-
-        // Helper: renderiza estrelas FontAwesome e o valor numérico
-        function renderStarsHtml(nota) {
-            const full = Math.floor(nota);
-            const rest = nota - full;
-            let half = false;
-            let displayNota = nota;
-            if (rest >= 0.75) {
-                displayNota = full + 1;
-            } else if (rest >= 0.25) {
-                half = true;
-            }
-            let html = '<div class="card-rating">';
-            for (let i = 0; i < full; i++) html += '<i class="fa-solid fa-star" style="color:var(--dourado)"></i>';
-            if (half) html += '<i class="fa-solid fa-star-half-stroke" style="color:var(--dourado)"></i>';
-            const totalIcons = full + (half ? 1 : 0);
-            for (let i = totalIcons; i < 5; i++) html += '<i class="fa-regular fa-star" style="color:var(--cinza-claro)"></i>';
-            html += `<span style="margin-left:8px;color:var(--texto-claro);font-weight:bold">${displayNota.toFixed(1)}</span>`;
-            html += '</div>';
-            return html;
-        }
-
-        meus.forEach(local => {
-            const div = document.createElement('div');
-            div.className = 'card-item';
+    async function carregarDados() {
+        const endpointUser = userRole === 'proprietario' ? `/proprietarios/${userId}` : `/usuarios/${userId}`;
+        try {
+            const userData = await fetchAPI(endpointUser);
             
-            const nota = calcularNotaAcessibilidade(local);
-            const starsHtml = renderStarsHtml(nota);
-            div.innerHTML = `
-                <div class="card-header-row">
-                    <div>
-                        <h4>${local.nome}</h4>
-                        ${starsHtml}
-                    </div>
-                    <div class="card-actions">
-                        <button class="action-btn edit" onclick="editarLocalPerfil(${local.id})" title="Editar Nome">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="action-btn delete" onclick="excluirLocalPerfil(${local.id})" title="Excluir Local">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <p class="card-subtitle">${local.endereco || 'Sem endereço'}</p>
+            const inputName = document.getElementById('user-name-input');
+            const inputEmail = document.getElementById('user-email-input');
+            if(inputName) inputName.value = userData.nome;
+            if(inputEmail) inputEmail.value = userData.email;
+            
+            document.getElementById('user-role-label').innerText = userRole === 'proprietario' ? 'Proprietário' : 'Usuário';
+            
+            const avatar = localStorage.getItem('userAvatar') || `https://api.dicebear.com/7.x/adventurer/svg?seed=${userData.nome}`;
+            document.querySelector('.img-container').innerHTML = `<img src="${avatar}">`;
 
-                <div class="see-on-map">
-                    <small onclick="irParaMapa(${local.id})">
-                        Ver no mapa <i class="fa-solid fa-arrow-right"></i>
-                    </small>
-                </div>
-            `;
-            lista.appendChild(div);
-        });
+            const colLocais = document.getElementById('col-meus-locais');
+            const colComentarios = document.getElementById('col-comentarios');
+
+            if (userRole === 'proprietario') {
+                if(colComentarios) colComentarios.style.display = 'none';
+                if(colLocais) {
+                    colLocais.style.display = 'flex';
+                    colLocais.style.flexDirection = 'column';
+                    listarLocais();
+                }
+            } else {
+                if(colLocais) colLocais.style.display = 'none';
+                if(colComentarios) {
+                    colComentarios.style.display = 'flex';
+                    colComentarios.style.flexDirection = 'column';
+                    listarComentarios();
+                }
+            }
+        } catch (error) {
+            console.error(error);
+        }
     }
 
-    function carregarMeusComentarios(nomeUsuario) {
-        const locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
-        const lista = document.getElementById('lista-comentarios');
-        lista.innerHTML = '';
+    async function listarLocais() {
+        const container = document.getElementById('lista-meus-locais');
+        container.innerHTML = 'Carregando...';
 
-        let achouAlgum = false;
+        try {
+            const todos = await fetchAPI('/locais');
+            const meus = todos.filter(l => l.idProprietario == userId);
 
-        locais.forEach(local => {
-            if (local.comentarios) {
-                local.comentarios.forEach((coment, indexComentario) => {
-                    if (coment.autor === nomeUsuario) {
-                        achouAlgum = true;
-                        const div = document.createElement('div');
-                        div.className = 'card-item';
-                        
-                        // Renderizar tags do comentário (se houver)
-                        let tagsHtml = '';
-                        if (coment.tags && coment.tags.length > 0) {
-                            tagsHtml = '<div class="comment-tags">';
-                            coment.tags.forEach(tag => tagsHtml += `<span class="mini-tag">${tag}</span>`);
-                            tagsHtml += '</div>';
-                        }
+            container.innerHTML = '';
+            if (meus.length === 0) {
+                container.innerHTML = '<p class="empty-state">Nenhum local cadastrado.</p>';
+                return;
+            }
 
-                        div.innerHTML = `
-                            <div class="card-header-row">
-                                <h4>${local.nome}</h4>
-                                <div class="card-actions">
-                                    <button class="action-btn edit" onclick="editarComentarioPerfil(${local.id}, ${indexComentario})">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </button>
-                                    <button class="action-btn delete" onclick="excluirComentarioPerfil(${local.id}, ${indexComentario})">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <p class="comment-quote">"${coment.texto}"</p>
-                            ${tagsHtml}
-                            
-                            <div class="see-on-map">
-                                <small onclick="irParaMapa(${local.id})">
-                                    Ver no mapa <i class="fa-solid fa-arrow-right"></i>
-                                </small>
-                            </div>
-                        `;
-                        lista.appendChild(div);
-                    }
+            meus.forEach(local => {
+                const div = document.createElement('div');
+                div.className = 'card-item click-map';
+                div.style.cursor = 'pointer';
+
+                div.addEventListener('click', () => {
+                    localStorage.setItem('zoomLocalId', local.id);
+                    window.location.href = '../html/mapa.html';
                 });
-            }
-        });
 
-        if (!achouAlgum) {
-            lista.innerHTML = '<p class="empty-state">Você ainda não fez nenhum comentário.</p>';
+                div.innerHTML = `
+                    <div class="card-header-row">
+                        <h4>${local.nome}</h4>
+                        <div class="card-actions">
+                            <button class="action-btn edit" id="btn-edit-${local.id}"><i class="fa-solid fa-pen"></i></button>
+                            <button class="action-btn delete" id="btn-del-${local.id}"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <p>${local.endereco}</p>
+                    <small style="color:blue">Ver no mapa <i class="fa-solid fa-arrow-right"></i></small>
+                `;
+                container.appendChild(div);
+
+                document.getElementById(`btn-edit-${local.id}`).addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    editarLocal(local.id, local.nome);
+                });
+                
+                document.getElementById(`btn-del-${local.id}`).addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    excluirLocal(local.id);
+                });
+            });
+        } catch (error) {
+            container.innerHTML = 'Erro ao carregar locais.';
         }
     }
 
-    // 4. LÓGICA DOS BOTÕES (Global para o HTML acessar)
+    async function listarComentarios() {
+        const container = document.getElementById('lista-comentarios');
+        container.innerHTML = 'Carregando...';
 
-    // --- Ações de Local (Proprietário) ---
-    window.editarLocalPerfil = function(idLocal) {
-        const novoNome = prompt("Novo nome para o local:");
-        if (novoNome) {
-            let locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
-            const local = locais.find(l => l.id === idLocal);
-            if (local) {
-                local.nome = novoNome;
-                localStorage.setItem('locaisSimulados', JSON.stringify(locais));
-                location.reload(); // Atualiza a tela
+        try {
+            const locais = await fetchAPI('/locais');
+            let meusComentarios = [];
+
+            for (const local of locais) {
+                const comments = await fetchAPI(`/comentarios/local/${local.id}`);
+                if (comments && comments.length > 0) {
+                    const meus = comments.filter(c => c.idUsuario == userId);
+                    meus.forEach(c => {
+                        c.nomeLocal = local.nome;
+                        c.idLocal = local.id; 
+                        meusComentarios.push(c);
+                    });
+                }
             }
-        }
-    };
 
-    window.excluirLocalPerfil = function(idLocal) {
-        if (confirm("Tem certeza que deseja excluir este local permanentemente?")) {
-            let locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
-            locais = locais.filter(l => l.id !== idLocal);
-            localStorage.setItem('locaisSimulados', JSON.stringify(locais));
-            location.reload();
-        }
-    };
-
-    // --- Ações de Comentário (Usuário) ---
-    window.editarComentarioPerfil = function(idLocal, indexComentario) {
-        let locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
-        const localIdx = locais.findIndex(l => l.id === idLocal);
-        
-        if (localIdx !== -1) {
-            const textoAtual = locais[localIdx].comentarios[indexComentario].texto;
-            const novoTexto = prompt("Edite seu comentário:", textoAtual);
-            
-            if (novoTexto !== null && novoTexto.trim() !== "") {
-                locais[localIdx].comentarios[indexComentario].texto = novoTexto;
-                localStorage.setItem('locaisSimulados', JSON.stringify(locais));
-                location.reload();
+            container.innerHTML = '';
+            if (meusComentarios.length === 0) {
+                container.innerHTML = '<p class="empty-state">Nenhum comentário.</p>';
+                return;
             }
-        }
-    };
 
-    window.excluirComentarioPerfil = function(idLocal, indexComentario) {
-        if (confirm("Deseja apagar este comentário?")) {
-            let locais = JSON.parse(localStorage.getItem('locaisSimulados')) || [];
-            const localIdx = locais.findIndex(l => l.id === idLocal);
-            
-            if (localIdx !== -1) {
-                locais[localIdx].comentarios.splice(indexComentario, 1);
-                localStorage.setItem('locaisSimulados', JSON.stringify(locais));
-                location.reload();
+            meusComentarios.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'card-item click-map';
+                div.style.cursor = 'pointer';
+
+                div.addEventListener('click', () => {
+                    localStorage.setItem('zoomLocalId', c.idLocal);
+                    window.location.href = '../html/mapa.html';
+                });
+
+                div.innerHTML = `
+                    <div class="card-header-row">
+                        <h4>${c.nomeLocal}</h4>
+                        <div class="card-actions">
+                            <button class="action-btn edit" id="btn-com-edit-${c.id}"><i class="fa-solid fa-pen"></i></button>
+                            <button class="action-btn delete" id="btn-com-del-${c.id}"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <p style="font-style:italic">"${c.comentario}"</p>
+                    <div style="margin-top:5px">
+                        ${c.tags.map(t => `<span class="mini-tag">${t}</span>`).join(' ')}
+                    </div>
+                    <small style="color:blue; display:block; margin-top:5px">Ver no mapa <i class="fa-solid fa-arrow-right"></i></small>
+                `;
+                container.appendChild(div);
+
+                document.getElementById(`btn-com-edit-${c.id}`).addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editarComentario(c);
+                });
+
+                document.getElementById(`btn-com-del-${c.id}`).addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    excluirComentario(c.id);
+                });
+            });
+        } catch (error) {
+            container.innerHTML = 'Erro ao carregar comentários.';
+        }
+    }
+
+    async function editarLocal(id, nomeAtual) {
+        const novoNome = prompt("Novo nome:", nomeAtual);
+        if (novoNome && novoNome !== nomeAtual) {
+            try {
+                const locais = await fetchAPI('/locais');
+                const localObj = locais.find(l => l.id === id);
+                if(localObj) {
+                    localObj.nome = novoNome;
+                    await fetchAPI(`/locais/${id}`, { 
+                        method: 'PUT', 
+                        body: JSON.stringify(localObj) 
+                    });
+                    listarLocais();
+                }
+            } catch (e) { alert("Erro ao editar."); }
+        }
+    }
+
+    async function excluirLocal(id) {
+        if(confirm("Excluir local?")) {
+            try {
+                await fetchAPI(`/locais/${id}`, { method: 'DELETE' });
+                listarLocais();
+            } catch (e) { alert("Erro ao excluir."); }
+        }
+    }
+
+    async function editarComentario(comentarioObj) {
+        const novoTexto = prompt("Editar comentário:", comentarioObj.comentario);
+        if (novoTexto !== null && novoTexto !== comentarioObj.comentario) {
+            try {
+                const payload = {
+                    comentario: novoTexto,
+                    tags: comentarioObj.tags,
+                    idUsuario: userId,
+                    idLocal: comentarioObj.idLocal
+                };
+
+                await fetchAPI(`/comentarios/${comentarioObj.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                listarComentarios();
+            } catch (e) { alert("Erro ao editar."); }
+        }
+    }
+
+    async function excluirComentario(id) {
+        if(confirm("Apagar comentário?")) {
+            try {
+                await fetchAPI(`/comentarios/${id}`, { method: 'DELETE' });
+                listarComentarios();
+            } catch (e) { alert("Erro ao excluir."); }
+        }
+    }
+
+    function configurarEdicao() {
+        setupEditBtn('btn-edit-name', 'user-name-input');
+        setupEditBtn('btn-edit-email', 'user-email-input');
+        setupEditBtn('btn-edit-pass', 'user-pass-input');
+    }
+
+    function setupEditBtn(btnId, inputId) {
+        const btn = document.getElementById(btnId);
+        const input = document.getElementById(inputId);
+        if (!btn || !input) return;
+
+        btn.addEventListener('click', async () => {
+            if (input.disabled) {
+                input.disabled = false;
+                input.focus();
+                btn.textContent = "Salvar";
+            } else {
+                input.disabled = true;
+                btn.textContent = "Salvando...";
+                
+                try {
+                    const nome = document.getElementById('user-name-input').value;
+                    const email = document.getElementById('user-email-input').value;
+                    const senha = document.getElementById('user-pass-input').value;
+
+                    if(!nome || !email || !senha) throw new Error("Preencha todos os campos.");
+
+                    const endpoint = userRole === 'proprietario' ? `/proprietarios/${userId}` : `/usuarios/${userId}`;
+                    await fetchAPI(endpoint, {
+                        method: 'PUT',
+                        body: JSON.stringify({ nome, email, senha })
+                    });
+                    
+                    btn.textContent = "Editar";
+                    alert("Dados atualizados.");
+                    localStorage.setItem('userName', nome);
+                } catch (error) {
+                    input.disabled = false;
+                    btn.textContent = "Salvar";
+                    alert(error.message);
+                }
             }
-        }
-    };
-
-    // Redirecionamento Mapa
-    window.irParaMapa = function(idLocal) {
-        localStorage.setItem('zoomLocalId', idLocal);
-        window.location.href = '../html/mapa.html';
-    };
-
-    // 5. LOGOUT
-    const btnLogout = document.getElementById('btn-logout');
-    if(btnLogout) {
-        btnLogout.addEventListener('click', (e) => {
-            e.preventDefault(); // Evita comportamento padrão de link se houver
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('userName');
-            localStorage.removeItem('userEmail');
-            window.location.href = '../html/login.html';
         });
     }
 
-    // 6. MODAL AVATAR (Mantido igual)
+    window.adicionarNovoLocalPerfil = function() {
+        localStorage.setItem('openNovoLocal', '1');
+        window.location.href = 'mapa.html';
+    };
+
+    document.getElementById('btn-logout')?.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = '../html/login.html';
+    });
+
     const btnTrocar = document.getElementById('btn-trocar-imagem');
     const modalAvatar = document.getElementById('modal-avatar');
-    // Botão no HTML usa id "btn-fechar-avatar" — antes estava com id incorreto
     const btnCancelar = document.getElementById('btn-fechar-avatar');
-    // A grid de avatares no HTML usa a classe "avatar-grid"
     const grid = document.querySelector('.avatar-grid');
-
     const listaAvatares = [
         "https://api.dicebear.com/7.x/adventurer/svg?seed=Felix",
         "https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka",
         "https://api.dicebear.com/7.x/adventurer/svg?seed=Midnight",
-        "https://api.dicebear.com/7.x/adventurer/svg?seed=Abby",
-        "https://api.dicebear.com/7.x/adventurer/svg?seed=Bella",
-        "https://api.dicebear.com/7.x/adventurer/svg?seed=Brian"
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Abby"
     ];
-
-    function renderAvatares() {
-        if(!grid) return;
-        grid.innerHTML = '';
-        listaAvatares.forEach(url => {
-            const img = document.createElement('img');
-            img.src = url;
-            img.className = 'avatar-option';
-            img.onclick = () => {
-                document.querySelector('.img-container').innerHTML = `<img src="${url}">`;
-                localStorage.setItem('userAvatar', url);
-                if(modalAvatar) modalAvatar.classList.remove('is-open');
-            };
-            grid.appendChild(img);
-        });
-    }
 
     if (btnTrocar) {
         btnTrocar.addEventListener('click', (e) => { 
             e.preventDefault(); 
-            if(modalAvatar) modalAvatar.classList.add('is-open'); 
-            renderAvatares(); 
-        });
-    }
-    
-    if (btnCancelar) {
-        btnCancelar.addEventListener('click', () => {
-            if(modalAvatar) modalAvatar.classList.remove('is-open');
-        });
-    }
-
-    // Ação usada ao clicar em "Adicionar Novo Local" no perfil (abre modal no mapa)
-    window.adicionarNovoLocalPerfil = function() {
-        // marca que o mapa deve abrir o modal de novo local e navega
-        try { localStorage.setItem('openNovoLocal', '1'); } catch(e) {}
-        window.location.href = 'mapa.html';
-    };
-
-    // Lógica de edição de inputs (Nome/Email)
-    const setupEdit = (btnId, inputId, storageKey) => {
-        const btn = document.getElementById(btnId);
-        const input = document.getElementById(inputId);
-        if(btn && input) {
-            btn.addEventListener('click', () => {
-                if (input.disabled) {
-                    input.disabled = false; input.focus(); btn.textContent = "Salvar";
-                    btn.classList.add('saving');
-                } else {
-                    input.disabled = true; btn.textContent = "Editar";
-                    btn.classList.remove('saving');
-                    if (storageKey) localStorage.setItem(storageKey, input.value);
-                    alert("Atualizado!");
-                }
+            modalAvatar.classList.add('is-open'); 
+            grid.innerHTML = '';
+            listaAvatares.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = 'avatar-option';
+                img.onclick = () => {
+                    localStorage.setItem('userAvatar', url);
+                    document.querySelector('.img-container').innerHTML = `<img src="${url}">`;
+                    modalAvatar.classList.remove('is-open');
+                };
+                grid.appendChild(img);
             });
-        }
-    };
+        });
+    }
     
-    // Se os botões existirem no HTML, adapte os IDs abaixo se necessário
-    setupEdit('btn-edit-name', 'user-name-input', 'userName'); // Ela não tinha IDs nos botões de editar no HTML original, mas se tiver, funciona.
+    if (btnCancelar) btnCancelar.addEventListener('click', () => modalAvatar.classList.remove('is-open'));
 });

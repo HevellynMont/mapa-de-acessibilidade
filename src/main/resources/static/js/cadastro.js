@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cadastroForm = document.getElementById('cadastroForm');
 
     if (cadastroForm) {
-        cadastroForm.addEventListener('submit', (e) => {
+        cadastroForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const nome = document.getElementById('nome').value.trim();
@@ -17,26 +17,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const usuarios = JSON.parse(localStorage.getItem('usuariosSimulados')) || [];
+            const endpoint = tipo === 'proprietario' ? '/proprietarios' : '/usuarios';
             
-            if (usuarios.some(u => u.email === email)) {
-                alert("Email já cadastrado!");
-                return;
-            }
-
-            const novoUsuario = {
-                id: Date.now(),
+            const payload = {
                 nome: nome,
                 email: email,
-                senha: senha,
-                tipo: tipo
+                senha: senha
             };
 
-            usuarios.push(novoUsuario);
-            localStorage.setItem('usuariosSimulados', JSON.stringify(usuarios));
+            try {
+                await fetchAPI(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
 
-            alert("Cadastro realizado com sucesso! Faça login.");
-            window.location.href = '../html/login.html';
+                alert("Cadastro realizado com sucesso! Faça login.");
+                window.location.href = '../html/login.html';
+            } catch (error) {
+                alert("Erro ao cadastrar: " + error.message);
+            }
         });
     }
 });
