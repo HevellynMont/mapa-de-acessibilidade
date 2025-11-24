@@ -34,8 +34,8 @@ public class ComentarioController {
     public ResponseEntity<Comentario> criar(@RequestBody @Valid ComentarioRequestDTO dto) {
         Comentario c = new Comentario();
         BeanUtils.copyProperties(dto, c);
-        
-        Comentario salvo = service.salvar(c, dto.idUsuario(), dto.idLocal(), dto.tags());
+
+        Comentario salvo = service.salvar(c, dto.getIdUsuario(), dto.getIdLocal(), dto.getTags());
 
         var uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(salvo.getId()).toUri();

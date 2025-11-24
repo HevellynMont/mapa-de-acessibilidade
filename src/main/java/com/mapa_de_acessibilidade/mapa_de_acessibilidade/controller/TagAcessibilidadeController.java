@@ -1,6 +1,6 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.controller;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.enums.TagAcessibilidadeEnum;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -19,8 +18,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class TagAcessibilidadeController {
 
     @GetMapping
-    @Operation(summary = "Listar tags disponíveis (Enum)")
     public ResponseEntity<List<TagAcessibilidadeEnum>> listar() {
-        return ResponseEntity.ok(Arrays.asList(TagAcessibilidadeEnum.values()));
+        List<TagAcessibilidadeEnum> listaTags = new ArrayList<>();
+
+        for (TagAcessibilidadeEnum tag : TagAcessibilidadeEnum.values()) {
+            listaTags.add(tag);
+        }
+
+        return ResponseEntity.ok(listaTags);
     }
 }

@@ -1,7 +1,6 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.enums;
 
 public enum TagAcessibilidadeEnum {
-
     RAMPA("Rampa de Acesso", false),
     ELEVADOR("Elevador Adaptado", false),
     BANHEIRO("Banheiro Adaptado", false),
@@ -10,7 +9,6 @@ public enum TagAcessibilidadeEnum {
     ESTACIONAMENTO("Estacionamento Prioritário", false),
     ENTRADA_LARGA("Entrada Larga", false),
     BRAILLE("Cardápio em Braille", false),
-
     INADEQUADO("Local Não Acessível / Inadequado", true);
 
     private final String descricao;

@@ -1,13 +1,12 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Interface;
 
-import java.util.Set;
+import java.util.List;
 
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Local;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Usuario;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.enums.TagAcessibilidadeEnum;
 
 public interface ComentarioInterface {
-
     String getTexto();
 
     void setTexto(String texto);
@@ -24,7 +23,7 @@ public interface ComentarioInterface {
 
     void setLocal(Local local);
 
-    Set<TagAcessibilidadeEnum> getTags();
+    List<TagAcessibilidadeEnum> getTags();
 
-    void setTags(Set<TagAcessibilidadeEnum> tags);
+    void setTags(List<TagAcessibilidadeEnum> tags);
 }

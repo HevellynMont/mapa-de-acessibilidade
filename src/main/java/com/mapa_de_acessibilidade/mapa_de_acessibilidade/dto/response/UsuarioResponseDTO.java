@@ -1,7 +1,10 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.response;
 
+import java.util.ArrayList;
 import java.util.List;
+
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Usuario;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +22,10 @@ public class UsuarioResponseDTO {
     }
 
     public static List<UsuarioResponseDTO> toResponsesDTO(List<Usuario> lista) {
-        return lista.stream().map(UsuarioResponseDTO::toResponseDTO).toList();
+        List<UsuarioResponseDTO> dtos = new ArrayList<>();
+        for (Usuario u : lista) {
+            dtos.add(toResponseDTO(u));
+        }
+        return dtos;
     }
 }

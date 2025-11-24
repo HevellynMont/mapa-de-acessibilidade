@@ -1,7 +1,8 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.service;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class ComentarioService {
+
     @Autowired
     private ComentarioRepository comentarioRepo;
     @Autowired
@@ -32,14 +34,25 @@ public class ComentarioService {
 
     @Transactional
     public Comentario salvar(Comentario c, Long idUser, Long idLocal, List<TagAcessibilidadeEnum> tagsEnum) {
-        Usuario u = usuarioRepo.findById(idUser)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
-        Local l = localRepo.findById(idLocal)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Local não encontrado"));
+        Optional<Usuario> usuarioOpt = usuarioRepo.findById(idUser);
+        if (usuarioOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado");
+        }
 
-        c.setUsuario(u);
-        c.setLocal(l);
-        c.setTags(new HashSet<>(tagsEnum));
+        Optional<Local> localOpt = localRepo.findById(idLocal);
+        if (localOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Local não encontrado");
+        }
+
+        c.setUsuario(usuarioOpt.get());
+        c.setLocal(localOpt.get());
+
+        if (tagsEnum != null) {
+            c.setTags(new ArrayList<>(tagsEnum));
+        } else {
+            c.setTags(new ArrayList<>());
+        }
+
         Comentario salvo = comentarioRepo.save(c);
         localService.recalcularReputacao(idLocal);
         return salvo;
@@ -50,8 +63,11 @@ public class ComentarioService {
     }
 
     public Comentario buscarPorId(Long id) {
-        return comentarioRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comentário não encontrado"));
+        Optional<Comentario> compOpt = comentarioRepo.findById(id);
+        if (compOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comentário não encontrado");
+        }
+        return compOpt.get();
     }
 
     @Transactional
@@ -65,10 +81,11 @@ public class ComentarioService {
     @Transactional
     public Comentario atualizar(Long id, ComentarioRequestDTO dto) {
         Comentario c = buscarPorId(id);
-        c.setTexto(dto.texto());
 
-        if (dto.tags() != null) {
-            c.setTags(new HashSet<>(dto.tags()));
+        c.setTexto(dto.getTexto());
+
+        if (dto.getTags() != null) {
+            c.setTags(new ArrayList<>(dto.getTags()));
         }
 
         Comentario atualizado = comentarioRepo.save(c);

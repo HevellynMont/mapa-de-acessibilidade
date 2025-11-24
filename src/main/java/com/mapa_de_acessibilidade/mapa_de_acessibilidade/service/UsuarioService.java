@@ -1,6 +1,7 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,9 @@ public class UsuarioService {
     private UsuarioRepository repo;
 
     public Usuario salvar(Usuario u) {
-        if (repo.existsByEmail(u.getEmail()))
+        if (repo.existsByEmail(u.getEmail())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email já cadastrado");
+        }
         return repo.save(u);
     }
 
@@ -27,8 +29,11 @@ public class UsuarioService {
     }
 
     public Usuario buscarPorId(Long id) {
-        return repo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+        Optional<Usuario> opt = repo.findById(id);
+        if (opt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado");
+        }
+        return opt.get();
     }
 
     public Usuario atualizar(Long id, Usuario u) {
@@ -38,8 +43,9 @@ public class UsuarioService {
     }
 
     public void deletar(Long id) {
-        if (!repo.existsById(id))
+        if (!repo.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Não encontrado");
+        }
         repo.deleteById(id);
     }
 }

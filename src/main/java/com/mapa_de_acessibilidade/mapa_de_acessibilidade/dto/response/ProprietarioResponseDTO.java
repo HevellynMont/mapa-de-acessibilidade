@@ -1,7 +1,10 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.response;
 
+import java.util.ArrayList;
 import java.util.List;
+
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Proprietario;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +22,10 @@ public class ProprietarioResponseDTO {
     }
 
     public static List<ProprietarioResponseDTO> toResponsesDTO(List<Proprietario> lista) {
-        return lista.stream().map(ProprietarioResponseDTO::toResponseDTO).toList();
+        List<ProprietarioResponseDTO> dtos = new ArrayList<>();
+        for (Proprietario p : lista) {
+            dtos.add(toResponseDTO(p));
+        }
+        return dtos;
     }
 }

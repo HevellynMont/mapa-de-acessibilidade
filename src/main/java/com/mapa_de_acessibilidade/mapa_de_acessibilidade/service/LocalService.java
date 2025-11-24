@@ -1,6 +1,7 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.BeanUtils;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.client.NominatimClient;
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.client.dto.NominatimResponseDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.dto.request.LocalRequestDTO;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Comentario;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Local;
@@ -20,23 +22,32 @@ import com.mapa_de_acessibilidade.mapa_de_acessibilidade.repository.Proprietario
 
 @Service
 public class LocalService {
+
     @Autowired
     private LocalRepository localRepo;
+
     @Autowired
     private ProprietarioRepository propRepo;
+
     @Autowired
     private NominatimClient nominatimClient;
 
     public Local salvar(Local local, Long idProprietario) {
-        Proprietario dono = propRepo.findById(idProprietario)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proprietário não encontrado"));
+        Optional<Proprietario> donoOpt = propRepo.findById(idProprietario);
+        if (donoOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Proprietário não encontrado");
+        }
+
+        Proprietario dono = donoOpt.get();
         local.setProprietario(dono);
 
         if (local.getId() == null || local.getLatitude() == null) {
-            nominatimClient.buscarCoordenadas(local.getEndereco()).ifPresent(coords -> {
+            Optional<NominatimResponseDTO> coordsOpt = nominatimClient.buscarCoordenadas(local.getEndereco());
+            if (coordsOpt.isPresent()) {
+                NominatimResponseDTO coords = coordsOpt.get();
                 local.setLatitude(coords.getLatitude());
                 local.setLongitude(coords.getLongitude());
-            });
+            }
         }
         return localRepo.save(local);
     }
@@ -46,24 +57,31 @@ public class LocalService {
     }
 
     public Local buscarPorId(Long id) {
-        return localRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Local não encontrado"));
+        Optional<Local> localOpt = localRepo.findById(id);
+        if (localOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Local não encontrado");
+        }
+        return localOpt.get();
     }
 
     public Local atualizar(Long id, LocalRequestDTO dto) {
         Local local = buscarPorId(id);
         BeanUtils.copyProperties(dto, local, "idProprietario");
-        nominatimClient.buscarCoordenadas(local.getEndereco()).ifPresent(coords -> {
+
+        Optional<NominatimResponseDTO> coordsOpt = nominatimClient.buscarCoordenadas(local.getEndereco());
+        if (coordsOpt.isPresent()) {
+            NominatimResponseDTO coords = coordsOpt.get();
             local.setLatitude(coords.getLatitude());
             local.setLongitude(coords.getLongitude());
-        });
+        }
 
         return localRepo.save(local);
     }
 
     public void deletar(Long id) {
-        if (!localRepo.existsById(id))
+        if (!localRepo.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Local não encontrado");
+        }
         localRepo.deleteById(id);
     }
 
@@ -78,36 +96,55 @@ public class LocalService {
             return;
         }
 
-        // Conta quantas tags POSITIVAS existem no total no Enum
-        long totalPossiveis = java.util.Arrays.stream(TagAcessibilidadeEnum.values())
-                .filter(t -> !t.isNegativa())
-                .count();
-        
-        if (totalPossiveis == 0) totalPossiveis = 1;
+        long totalPossiveis = 0;
+        for (TagAcessibilidadeEnum t : TagAcessibilidadeEnum.values()) {
+            if (!t.isNegativa()) {
+                totalPossiveis++;
+            }
+        }
+
+        if (totalPossiveis == 0)
+            totalPossiveis = 1;
 
         double somaNotas = 0.0;
         int qtdComentariosValidos = 0;
 
         for (Comentario c : comentarios) {
-            boolean temNegativa = c.getTags().stream().anyMatch(TagAcessibilidadeEnum::isNegativa);
+            boolean temNegativa = false;
+
+            for (TagAcessibilidadeEnum tagDoComentario : c.getTags()) {
+                if (tagDoComentario.isNegativa()) {
+                    temNegativa = true;
+                    break;
+                }
+            }
 
             if (temNegativa) {
                 somaNotas += 0.0;
             } else {
                 long marcadas = c.getTags().size();
                 double notaCalculada = ((double) marcadas / totalPossiveis) * 5.0;
-                if (notaCalculada > 5.0) notaCalculada = 5.0;
-                
+
+                if (notaCalculada > 5.0)
+                    notaCalculada = 5.0;
                 somaNotas += notaCalculada;
             }
             qtdComentariosValidos++;
         }
 
-        double mediaFinal = qtdComentariosValidos > 0 ? (somaNotas / qtdComentariosValidos) : 0.0;
-        mediaFinal = Math.round(mediaFinal * 10.0) / 10.0;
+        double mediaFinal = 0.0;
+        if (qtdComentariosValidos > 0) {
+            mediaFinal = somaNotas / qtdComentariosValidos;
+        }
 
+        mediaFinal = Math.round(mediaFinal * 10.0) / 10.0;
         local.setMediaAvaliacao(mediaFinal);
-        local.setPossuiSelo(mediaFinal >= 3.0);
+
+        if (mediaFinal >= 3.0) {
+            local.setPossuiSelo(true);
+        } else {
+            local.setPossuiSelo(false);
+        }
 
         localRepo.save(local);
     }
