@@ -36,7 +36,7 @@ public class ComentarioService {
     @Transactional
     public Comentario salvar(Comentario c, Long idUser, Long idLocal, List<TagAcessibilidadeEnum> tagsEnum) {
         Usuario usuario = usuarioRepo.findById(idUser)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado. ID: " + idUser));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 
         Local local = localRepo.findById(idLocal)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Local não encontrado"));
@@ -51,9 +51,7 @@ public class ComentarioService {
         }
 
         Comentario salvo = comentarioRepo.save(c);
-        
         localService.recalcularReputacao(idLocal);
-
         return salvo;
     }
 
@@ -69,16 +67,18 @@ public class ComentarioService {
     @Transactional
     public Comentario atualizar(Long id, ComentarioRequestDTO dto) {
         Comentario c = buscarPorId(id);
+
         c.setTexto(dto.getTexto());
 
         if (dto.getTags() != null) {
-            List<TagAcessibilidadeEnum> novasTags = new ArrayList<>();
-            for (String t : dto.getTags()) {
+            List<TagAcessibilidadeEnum> tagsConvertidas = new ArrayList<>();
+            for (String tagStr : dto.getTags()) {
                 try {
-                    novasTags.add(TagAcessibilidadeEnum.valueOf(t));
-                } catch (Exception e) {}
+                    tagsConvertidas.add(TagAcessibilidadeEnum.valueOf(tagStr));
+                } catch (IllegalArgumentException e) {
+                }
             }
-            c.setTags(novasTags);
+            c.setTags(tagsConvertidas);
         }
 
         Comentario atualizado = comentarioRepo.save(c);
@@ -89,8 +89,17 @@ public class ComentarioService {
     @Transactional
     public void deletar(Long id) {
         Comentario c = buscarPorId(id);
-        Long idLocal = c.getLocal().getId();
-        comentarioRepo.deleteById(id);
-        localService.recalcularReputacao(idLocal);
+        Local local = c.getLocal();
+
+        if (local != null && local.getComentarios() != null) {
+            local.getComentarios().remove(c);
+        }
+
+        comentarioRepo.delete(c);
+        comentarioRepo.flush();
+
+        if (local != null) {
+            localService.recalcularReputacao(local.getId());
+        }
     }
 }
