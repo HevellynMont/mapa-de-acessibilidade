@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button class="action-btn delete" id="btn-com-del-${c.id}"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
-                    <p style="font-style:italic">"${c.comentario}"</p>
+                    <p style="font-style:italic">"${c.texto}"</p>
                     <div style="margin-top:5px">
                         ${c.tags.map(t => `<span class="mini-tag">${t}</span>`).join(' ')}
                     </div>
@@ -195,11 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function editarComentario(comentarioObj) {
-        const novoTexto = prompt("Editar comentário:", comentarioObj.comentario);
-        if (novoTexto !== null && novoTexto !== comentarioObj.comentario) {
+        const novoTexto = prompt("Editar comentário:", comentarioObj.texto);
+        if (novoTexto !== null && novoTexto !== comentarioObj.texto) {
             try {
                 const payload = {
-                    comentario: novoTexto,
+                    texto: novoTexto,
                     tags: comentarioObj.tags,
                     idUsuario: userId,
                     idLocal: comentarioObj.idLocal

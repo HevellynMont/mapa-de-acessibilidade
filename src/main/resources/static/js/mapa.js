@@ -112,14 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             comentarios.forEach(c => {
-                let avatarImg;
-                if (userId && c.idUsuario == userId) {
-                     const myAvatar = localStorage.getItem('userAvatar') || `https://api.dicebear.com/7.x/adventurer/svg?seed=${c.idUsuario}`;
-                     avatarImg = `<img src="${myAvatar}" class="comment-avatar-img">`;
-                } else {
-                    const seed = c.idUsuario || Math.random(); 
-                    avatarImg = `<img src="https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}" class="comment-avatar-img">`;
-                }
+                const nomeParaAvatar = c.nomeUsuario || "anonimo";
+                const avatarImgUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(nomeParaAvatar)}`;
+                const avatarImgTag = `<img src="${avatarImgUrl}" class="comment-avatar-img">`;
 
                 let tagsHtml = '';
                 if (c.tags && c.tags.length > 0) {
@@ -140,13 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 div.className = 'comentario-item';
                 div.innerHTML = `
                     <div class="comment-row">
-                        <div class="comment-avatar">${avatarImg}</div>
+                        <div class="comment-avatar">${avatarImgTag}</div>
                         <div class="comment-body">
                             <div class="comment-author-row">
-                                <strong>Usuário #${c.idUsuario} ${userId && c.idUsuario == userId ? '(Você)' : ''}</strong>
+                                <strong>${c.nomeUsuario || "Usuário"} ${userId && c.idUsuario == userId ? '(Você)' : ''}</strong>
                                 ${btnDelete}
                             </div>
-                            <p class="comment-text">${c.comentario}</p>
+                            <p class="comment-text">${c.texto}</p>
                             ${tagsHtml}
                         </div>
                     </div>
@@ -155,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.appendChild(div);
             });
         } catch (e) {
+            console.error(e);
             container.innerHTML = '<p>Erro ao carregar avaliações.</p>';
         }
     }
@@ -199,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnEnviar.addEventListener('click', async () => {
             if (!userId) { alert("Faça login para avaliar."); return; }
             
-            const texto = document.getElementById('novo-comentario-texto').value;
+            const textoDigitado = document.getElementById('novo-comentario-texto').value;
             const tagsSelecionadas = Array.from(document.querySelectorAll('.tag-chip.selected')).map(el => el.dataset.key);
 
             if (tagsSelecionadas.length === 0) {
@@ -208,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const payload = {
-                comentario: texto,
+                texto: textoDigitado,
                 idUsuario: parseInt(userId),
                 idLocal: localAtualId,
                 tags: tagsSelecionadas
