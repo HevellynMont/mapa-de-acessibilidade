@@ -13,12 +13,12 @@ import com.mapa_de_acessibilidade.mapa_de_acessibilidade.client.NominatimClient;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.client.dto.NominatimResponse;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Local;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.LocalTag;
-import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.TagAcessibilidade;
-import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Proprietario;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Pessoa;
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.Proprietario;
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.model.TagAcessibilidade;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.repository.LocalRepository;
-import com.mapa_de_acessibilidade.mapa_de_acessibilidade.repository.ProprietarioRepository;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.repository.PessoaRepository;
+import com.mapa_de_acessibilidade.mapa_de_acessibilidade.repository.ProprietarioRepository;
 import com.mapa_de_acessibilidade.mapa_de_acessibilidade.repository.TagAcessibilidadeRepository;
 
 @Service

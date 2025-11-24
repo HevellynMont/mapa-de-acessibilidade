@@ -1,6 +1,7 @@
 package com.mapa_de_acessibilidade.mapa_de_acessibilidade.model;
 
 import java.io.Serializable;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
