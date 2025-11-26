@@ -21,6 +21,16 @@ import lombok.ToString;
 public class Usuario extends Pessoa {
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Schema(hidden = true) 
+    @Schema(hidden = true)
     private Set<Comentario> comentarios = new HashSet<>();
+
+    @Override
+    public String getTipoPessoa() {
+        return "Usuario: " + getNome();
+    }
+
+    @Override
+    public int getQuantidadeDeRelacionamentos() {
+        return comentarios.size();
+    }
 }

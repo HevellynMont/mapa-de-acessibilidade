@@ -41,4 +41,9 @@ public abstract class Pessoa {
 
     @Column(nullable = false)
     private String senha;
+
+    public abstract String getTipoPessoa();
+
+    public abstract int getQuantidadeDeRelacionamentos();
+
 }
