@@ -4,15 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class NominatimResponse {
 
-    // @JsonProperty mapeia o campo "lat" do JSON para o campo Java
     @JsonProperty("lat")
     private Double latitude;
 
-    // @JsonProperty mapeia o campo "lon" do JSON para o campo Java
     @JsonProperty("lon")
     private Double longitude;
 
-    // Construtor vazio (Obrigatório para o Jackson/Spring)
     public NominatimResponse() {}
     
    

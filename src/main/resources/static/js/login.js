@@ -2,53 +2,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
 
     if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
+        loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value.trim();
             const senha = document.getElementById('senha').value.trim();
+            const btn = loginForm.querySelector('button');
 
             if (!email || !senha) {
                 alert('Preencha todos os campos.');
                 return;
             }
 
-            // Detecta tipo de usuário pelo localStorage ou adiciona um seletor se necessário
-            let tipo = localStorage.getItem('loginTipo') || 'usuario';
-            // Se houver um campo de seleção de tipo, use ele
-            const tipoRadio = document.querySelector('input[name="tipo"]:checked');
-            if (tipoRadio) tipo = tipoRadio.value;
-
-            try {
-                const response = await fetch('http://localhost:8080/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        senha: senha,
-                        tipo: tipo
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.sucesso) {
-                    // Salva dados do usuário logado
-                    localStorage.setItem('userId', data.id);
-                    localStorage.setItem('userName', data.nome);
-                    localStorage.setItem('userEmail', data.email);
-                    localStorage.setItem('userRole', data.tipo);
-
-                    alert(`Bem-vindo(a), ${data.nome}!`);
-                    window.location.href = '../html/mapa.html';
-                } else {
-                    alert(data.mensagem || 'Email ou senha incorretos.');
-                }
-            } catch (error) {
-                alert('Erro ao conectar com o servidor.');
-                console.error(error);
-            }
+            realizarLogin(email, senha, btn);
         });
+    }
+
+    async function realizarLogin(email, senha, btn) {
+        btn.disabled = true;
+        btn.textContent = "Entrando...";
+
+        try {
+            const usuarios = await fetchAPI('/usuarios');
+            let user = usuarios.find(u => u.email === email);
+            let role = 'usuario';
+
+            if (!user) {
+                const props = await fetchAPI('/proprietarios');
+                user = props.find(p => p.email === email);
+                role = 'proprietario';
+            }
+
+            if (user && (user.senha === senha || !user.senha)) {
+                localStorage.setItem('userId', user.id);
+                localStorage.setItem('userName', user.nome);
+                localStorage.setItem('userEmail', user.email);
+                localStorage.setItem('userRole', role);
+                
+                const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user.nome)}`;
+                localStorage.setItem('userAvatar', avatarUrl);
+
+                window.location.href = '../html/mapa.html';
+            } else {
+                alert('Email ou senha incorretos.');
+            }
+        } catch (error) {
+            alert("Erro ao conectar com o servidor.");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Entrar";
+        }
     }
 });

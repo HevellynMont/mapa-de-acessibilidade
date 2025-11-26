@@ -3,58 +3,34 @@ package com.mapa_de_acessibilidade.mapa_de_acessibilidade.model;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import lombok.EqualsAndHashCode;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * Classe Usuario que representa um usuário do sistema,
- * herda de Pessoa e pode fazer comentários sobre locais.
- */
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 @Entity
 @Table(name = "usuario")
-
-@EqualsAndHashCode(callSuper = true)
+@PrimaryKeyJoinColumn(name = "id")
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString(callSuper = true, onlyExplicitlyIncluded = true)
 public class Usuario extends Pessoa {
 
-    // Construtor Padrão (necessário para JPA)
-    public Usuario() {
-        super();
-    }
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Schema(hidden = true)
+    private Set<Comentario> comentarios = new HashSet<>();
 
-    // Construtor com todos os campos (chama o construtor de Pessoa)
-    public Usuario(String nome, String email, String telefone, String login, Integer senha) {
-        super(nome, email, telefone, login, senha);
-    }
-
-    /**
-     * Relacionamento com Comentario: um usuário pode fazer vários comentários.
-     */
-    @OneToMany(mappedBy = "pessoa", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ComentarioUsuario> comentarios = new HashSet<>();
-
-    // Getters e Setters
-    public Set<ComentarioUsuario> getComentarios() {
-        return comentarios;
-    }
-
-    public void setComentarios(Set<ComentarioUsuario> comentarios) {
-        this.comentarios = comentarios;
-    }
-
-   
-    public void adicionarComentario(ComentarioUsuario comentario) {
-        comentarios.add(comentario);
-        comentario.setPessoa(this);
-    }
-
-    
     @Override
-    public void removerComentario(ComentarioUsuario comentario) {
-        comentarios.remove(comentario);
-        comentario.setPessoa(null);
+    public String getTipoPessoa() {
+        return "Usuario: " + getNome();
     }
 
+    @Override
+    public int getQuantidadeDeRelacionamentos() {
+        return comentarios.size();
+    }
 }
